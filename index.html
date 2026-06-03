@@ -381,7 +381,21 @@ const LS_KEY='mawphylok_v2';
 let DATA=loadData();
 
 function loadData(){
-  try{ const r=localStorage.getItem(LS_KEY); if(r) return JSON.parse(r); }catch(e){}
+  try{
+    const raw=localStorage.getItem(LS_KEY);
+    if(raw){
+      const saved=JSON.parse(raw);
+      // Fusionner avec les défauts : clé absente ou tableau vide → valeur par défaut
+      const base=JSON.parse(JSON.stringify(DEFAULTS));
+      for(const k of Object.keys(base)){
+        if(saved[k]!==undefined){
+          const empty=Array.isArray(saved[k])&&saved[k].length===0;
+          if(!empty) base[k]=saved[k];
+        }
+      }
+      return base;
+    }
+  }catch(e){}
   return JSON.parse(JSON.stringify(DEFAULTS));
 }
 function saveData(){ localStorage.setItem(LS_KEY,JSON.stringify(DATA)); }
