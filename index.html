@@ -167,6 +167,7 @@
     <button class="etab-btn" onclick="showEtab(event,'male')">Mâle (M)</button>
     <button class="etab-btn" onclick="showEtab(event,'mo')">Mâle O</button>
     <button class="etab-btn" onclick="showEtab(event,'female')">Femelle (F)</button>
+    <button class="etab-btn" onclick="showEtab(event,'adapt')">Adapteur (A)</button>
     <button class="etab-btn" onclick="showEtab(event,'temp')">Température</button>
   </div>
 
@@ -226,6 +227,16 @@
     </table>
     <button class="btn-add" onclick="addThreadRow('female')">+ Ajouter</button>
     <button class="btn-reset" onclick="resetSection('female')">Réinitialiser</button>
+  </div></div>
+
+  <div id="esec-adapt" class="editor-section"><div class="editor-card">
+    <h2>Adapteur (A) — identification uniquement <span id="si-adapt" class="save-ind">✓ Sauvegardé</span></h2>
+    <p style="font-size:.8rem;color:#888;margin-bottom:12px">Ces données servent à identifier l'embout adapteur dans la référence. Elles ne sont pas utilisées dans le calcul de pression.</p>
+    <table class="data-table" id="tbl-adapt">
+      <thead><tr><th>Dénomination</th><th>Description</th><th></th></tr></thead><tbody></tbody>
+    </table>
+    <button class="btn-add" onclick="addAdaptRow()">+ Ajouter</button>
+    <button class="btn-reset" onclick="resetSection('adapt')">Réinitialiser</button>
   </div></div>
 
   <div id="esec-temp" class="editor-section"><div class="editor-card">
@@ -323,6 +334,18 @@ const DEFAULTS = {
     {denom:'8R',bar:338},{denom:'12R',bar:317},{denom:'16R',bar:303},{denom:'20R',bar:345},
     {denom:'24R',bar:317},{denom:'32R',bar:269},
   ],
+  adaptRows:[
+    {denom:'1',  desc:'1/16" fractional'},{denom:'2',  desc:'1/8" fractional'},
+    {denom:'4',  desc:'1/4" fractional'}, {denom:'6',  desc:'3/8" fractional'},
+    {denom:'8',  desc:'1/2" fractional'}, {denom:'12', desc:'3/4" fractional'},
+    {denom:'16', desc:'1" fractional'},   {denom:'20', desc:'1¼" fractional'},
+    {denom:'24', desc:'1½" fractional'},  {denom:'32', desc:'2" fractional'},
+    {denom:'4M', desc:'4 mm metric'},     {denom:'6M', desc:'6 mm metric'},
+    {denom:'8M', desc:'8 mm metric'},     {denom:'10M',desc:'10 mm metric'},
+    {denom:'12M',desc:'12 mm metric'},    {denom:'16M',desc:'16 mm metric'},
+    {denom:'18M',desc:'18 mm metric'},    {denom:'20M',desc:'20 mm metric'},
+    {denom:'25M',desc:'25 mm metric'},    {denom:'28M',desc:'28 mm metric'},
+  ],
   tempRows:[
     {label:'≤100°F (≤38°C)',factor:1.00},{label:'200°F (93°C)',factor:1.00},
     {label:'300°F (149°C)',factor:1.00},{label:'400°F (204°C)',factor:0.96},
@@ -370,6 +393,7 @@ function getTubeLabel(d){ const r=DATA.tubeRows.find(x=>x.denom===d); return r?r
 function getMaleMap(){   const m={}; DATA.maleRows.forEach(r=>{m[r.denom]=+r.bar}); return m; }
 function getFemaleMap(){ const m={}; DATA.femaleRows.forEach(r=>{m[r.denom]=+r.bar}); return m; }
 function getMoMap(){     const m={}; DATA.moRows.forEach(r=>{m[r.denom]=+r.bar}); return m; }
+function getAdaptMap(){ const m={}; DATA.adaptRows.forEach(r=>{m[r.denom]=r.desc}); return m; }
 
 // ═══════════════════════ PARSING ═══════════════════════
 const DENOM='(?:32|24|20|16|12|8|6|4|2|1)';
@@ -421,7 +445,7 @@ function ctLbl(ct,code){
   if(ct==='M')  return `Filetage mâle ${code}`;
   if(ct==='F')  return `Taraudage femelle ${code}`;
   if(ct==='MO') return `Filetage mâle O (COM) ${code}`;
-  if(ct==='A')  return `Adapteur ${code}`;
+  if(ct==='A')  { const d=getAdaptMap()[code]; return `Adapteur ${d?code+' ('+d+')':code}`; }
   if(ct==='T')  return `Tube ${getTubeLabel(code)||code}`;
   return code;
 }
@@ -619,6 +643,7 @@ function setField(key,field,el){
   if(section==='male')     DATA.maleRows[i][field]=el.value;
   if(section==='mo')       DATA.moRows[i][field]=el.value;
   if(section==='female')   DATA.femaleRows[i][field]=el.value;
+  if(section==='adapt')    DATA.adaptRows[i][field]=el.value;
   if(section==='temp')     DATA.tempRows[i][field]=field==='factor'?+el.value:el.value;
   saveData(); flash(section);
 }
@@ -666,6 +691,15 @@ function renderRaccords(){
      <button class="chip-del" onclick="delRaccord(this)" data-ref="${escH(r)}">×</button></div>`).join('');
 }
 
+function renderAdapt(){
+  document.querySelector('#tbl-adapt tbody').innerHTML=DATA.adaptRows.map((r,i)=>`<tr>
+    <td>${inp(r.denom,'80px','adapt:'+i,'denom')}</td>
+    <td>${inp(r.desc,'200px','adapt:'+i,'desc')}</td>
+    <td><button class="btn-del" onclick="delRow('adapt',${i})">×</button></td>
+  </tr>`).join('');
+}
+function addAdaptRow(){ DATA.adaptRows.push({denom:'',desc:''}); saveData();renderAdapt();flash('adapt'); }
+
 function addTypeRow(){ DATA.typeRows.push({code:'',conn1:'T',conn2:'T'}); saveData();renderTypes();flash('types'); }
 function addTubeRow(){ DATA.tubeRows.push({denom:'',taille:'',ep:0,bar:0,psi:null}); saveData();renderTube();flash('tube'); }
 function addThreadRow(k){ DATA[k+'Rows'].push({denom:'',bar:0}); saveData();renderThread(k);flash(k); }
@@ -679,10 +713,11 @@ function addRaccord(){
 
 function delRow(s,i){
   if(!confirm('Supprimer cette ligne ?'))return;
-  const map={types:'typeRows',tube:'tubeRows',male:'maleRows',mo:'moRows',female:'femaleRows',temp:'tempRows'};
+  const map={types:'typeRows',tube:'tubeRows',male:'maleRows',mo:'moRows',female:'femaleRows',adapt:'adaptRows',temp:'tempRows'};
   DATA[map[s]].splice(i,1); saveData();
   if(s==='types')renderTypes(); else if(s==='tube')renderTube();
-  else if(s==='temp')renderTemp(); else renderThread(s);
+  else if(s==='adapt')renderAdapt(); else if(s==='temp')renderTemp();
+  else renderThread(s);
   flash(s);
 }
 function delRaccord(btn){
@@ -693,7 +728,7 @@ function delRaccord(btn){
 
 function resetSection(s){
   if(!confirm('Réinitialiser aux valeurs par défaut ?'))return;
-  const map={types:'typeRows',tube:'tubeRows',male:'maleRows',mo:'moRows',female:'femaleRows',temp:'tempRows',raccords:'raccordList'};
+  const map={types:'typeRows',tube:'tubeRows',male:'maleRows',mo:'moRows',female:'femaleRows',adapt:'adaptRows',temp:'tempRows',raccords:'raccordList'};
   DATA[map[s]]=JSON.parse(JSON.stringify(DEFAULTS[map[s]]));
   saveData();renderAll();flash(s);
 }
@@ -701,7 +736,7 @@ function resetSection(s){
 function renderAll(){
   renderTypes();renderTube();
   renderThread('male');renderThread('mo');renderThread('female');
-  renderTemp();renderRaccords();
+  renderAdapt();renderTemp();renderRaccords();
   const ts=document.getElementById('tempSelect');
   const cur=ts.value;
   ts.innerHTML='<option value="">— Sélectionner —</option>'+
