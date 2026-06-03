@@ -1,0 +1,7 @@
+name = "mawphylok"
+pages_build_output_dir = "."
+compatibility_date = "2024-09-23"
+
+[[kv_namespaces]]
+binding = "MAWPHYLOK_DATA"
+id = "9ca0ee0a448c4ec98d92c12d013b6915"

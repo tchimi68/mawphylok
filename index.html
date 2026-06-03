@@ -408,36 +408,45 @@ const DEFAULTS = {
 
 // ═══════════════════════ DONNÉES ═══════════════════════
 const LS_KEY='mawphylok_v2';
+const API_KEY='mwp-9k2x-d4t4-2026';
 let DATA=loadData();
+
+function mergeWithDefaults(saved){
+  const base=JSON.parse(JSON.stringify(DEFAULTS));
+  for(const k of Object.keys(base)){
+    if(saved[k]!==undefined){
+      const empty=Array.isArray(saved[k])&&saved[k].length===0;
+      if(!empty) base[k]=saved[k];
+    }
+  }
+  for(const key of ['maleRows','femaleRows','moRows']){
+    if(base[key]) base[key].forEach(row=>{
+      if(!row.desc){ const def=(DEFAULTS[key]||[]).find(d=>d.denom===row.denom); row.desc=def?def.desc:''; }
+    });
+  }
+  return base;
+}
 
 function loadData(){
   try{
     const raw=localStorage.getItem(LS_KEY);
-    if(raw){
-      const saved=JSON.parse(raw);
-      // Fusionner avec les défauts : clé absente ou tableau vide → valeur par défaut
-      const base=JSON.parse(JSON.stringify(DEFAULTS));
-      for(const k of Object.keys(base)){
-        if(saved[k]!==undefined){
-          const empty=Array.isArray(saved[k])&&saved[k].length===0;
-          if(!empty) base[k]=saved[k];
-        }
-      }
-      // Migration : ajouter desc si absent dans les lignes de filetage
-      for(const key of ['maleRows','femaleRows','moRows']){
-        if(base[key]) base[key].forEach((row,i)=>{
-          if(!row.desc){
-            const def=(DEFAULTS[key]||[]).find(d=>d.denom===row.denom);
-            row.desc=def?def.desc:'';
-          }
-        });
-      }
-      return base;
-    }
+    if(raw) return mergeWithDefaults(JSON.parse(raw));
   }catch(e){}
   return JSON.parse(JSON.stringify(DEFAULTS));
 }
-function saveData(){ localStorage.setItem(LS_KEY,JSON.stringify(DATA)); }
+
+function saveData(){
+  localStorage.setItem(LS_KEY,JSON.stringify(DATA));
+  // Si admin connecté → sauvegarder sur le serveur pour tous
+  if(pinUnlocked){
+    fetch('/api/data',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-API-Key':API_KEY},
+      body:JSON.stringify(DATA)
+    }).catch(()=>{});
+  }
+}
+
 function flash(s){ const e=document.getElementById('si-'+s); if(!e)return; e.classList.add('show'); setTimeout(()=>e.classList.remove('show'),1500); }
 
 function getTypeMap(){ const m={}; DATA.typeRows.forEach(r=>{m[r.code]={conn1:r.conn1,conn2:r.conn2}}); return m; }
@@ -897,7 +906,20 @@ function renderAll(){
   if(cur)ts.value=cur;
 }
 
-renderAll();
+// Chargement initial : serveur en priorité, localStorage en fallback
+(async()=>{
+  try{
+    const res=await fetch('/api/data');
+    if(res.ok){
+      const serverData=await res.json();
+      if(serverData){
+        DATA=mergeWithDefaults(serverData);
+        localStorage.setItem(LS_KEY,JSON.stringify(DATA));
+      }
+    }
+  }catch(e){}
+  renderAll();
+})();
 </script>
 </body>
 </html>
