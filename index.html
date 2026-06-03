@@ -205,7 +205,7 @@
   <div id="esec-male" class="editor-section"><div class="editor-card">
     <h2>Filetage mâle (M) <span id="si-male" class="save-ind">✓ Sauvegardé</span></h2>
     <table class="data-table" id="tbl-male">
-      <thead><tr><th>Dénomination</th><th>Bar</th><th></th></tr></thead><tbody></tbody>
+      <thead><tr><th>Code</th><th>Description</th><th>Bar</th><th></th></tr></thead><tbody></tbody>
     </table>
     <button class="btn-add" onclick="addThreadRow('male')">+ Ajouter</button>
     <button class="btn-reset" onclick="resetSection('male')">Réinitialiser</button>
@@ -214,7 +214,7 @@
   <div id="esec-mo" class="editor-section"><div class="editor-card">
     <h2>Filetage mâle O — COM <span id="si-mo" class="save-ind">✓ Sauvegardé</span></h2>
     <table class="data-table" id="tbl-mo">
-      <thead><tr><th>Dénomination</th><th>Bar</th><th></th></tr></thead><tbody></tbody>
+      <thead><tr><th>Code</th><th>Description</th><th>Bar</th><th></th></tr></thead><tbody></tbody>
     </table>
     <button class="btn-add" onclick="addThreadRow('mo')">+ Ajouter</button>
     <button class="btn-reset" onclick="resetSection('mo')">Réinitialiser</button>
@@ -223,7 +223,7 @@
   <div id="esec-female" class="editor-section"><div class="editor-card">
     <h2>Taraudage femelle (F) <span id="si-female" class="save-ind">✓ Sauvegardé</span></h2>
     <table class="data-table" id="tbl-female">
-      <thead><tr><th>Dénomination</th><th>Bar</th><th></th></tr></thead><tbody></tbody>
+      <thead><tr><th>Code</th><th>Description</th><th>Bar</th><th></th></tr></thead><tbody></tbody>
     </table>
     <button class="btn-add" onclick="addThreadRow('female')">+ Ajouter</button>
     <button class="btn-reset" onclick="resetSection('female')">Réinitialiser</button>
@@ -312,27 +312,39 @@ const DEFAULTS = {
     {denom:'28M',taille:'28 mm',ep:2.0,bar:180,psi:null},
   ],
   maleRows:[
-    {denom:'1N',bar:759},{denom:'2N',bar:690},{denom:'4N',bar:552},{denom:'6N',bar:538},
-    {denom:'8N',bar:531},{denom:'12N',bar:504},{denom:'16N',bar:366},{denom:'20N',bar:414},
-    {denom:'24N',bar:345},{denom:'32N',bar:269},
-    {denom:'1R',bar:759},{denom:'2R',bar:690},{denom:'4R',bar:552},{denom:'6R',bar:538},
-    {denom:'8R',bar:531},{denom:'12R',bar:504},{denom:'16R',bar:366},{denom:'20R',bar:414},
-    {denom:'24R',bar:345},{denom:'32R',bar:269},
-    {denom:'2G',bar:400},{denom:'4G',bar:400},{denom:'6G',bar:400},{denom:'8G',bar:324},
-    {denom:'12G',bar:250},{denom:'16G',bar:250},{denom:'20G',bar:160},{denom:'24G',bar:160},
-    {denom:'32G',bar:160},
+    {denom:'1N',desc:'1/16" NPT', bar:759},{denom:'2N',desc:'1/8" NPT',  bar:690},
+    {denom:'4N',desc:'1/4" NPT',  bar:552},{denom:'6N',desc:'3/8" NPT',  bar:538},
+    {denom:'8N',desc:'1/2" NPT',  bar:531},{denom:'12N',desc:'3/4" NPT', bar:504},
+    {denom:'16N',desc:'1" NPT',   bar:366},{denom:'20N',desc:'1¼" NPT',  bar:414},
+    {denom:'24N',desc:'1½" NPT',  bar:345},{denom:'32N',desc:'2" NPT',   bar:269},
+    {denom:'1R',desc:'1/16" BSPT',bar:759},{denom:'2R',desc:'1/8" BSPT', bar:690},
+    {denom:'4R',desc:'1/4" BSPT', bar:552},{denom:'6R',desc:'3/8" BSPT', bar:538},
+    {denom:'8R',desc:'1/2" BSPT', bar:531},{denom:'12R',desc:'3/4" BSPT',bar:504},
+    {denom:'16R',desc:'1" BSPT',  bar:366},{denom:'20R',desc:'1¼" BSPT', bar:414},
+    {denom:'24R',desc:'1½" BSPT', bar:345},{denom:'32R',desc:'2" BSPT',  bar:269},
+    {denom:'2G',desc:'1/8" BSPP CMC', bar:400},{denom:'4G',desc:'1/4" BSPP CMC',bar:400},
+    {denom:'6G',desc:'3/8" BSPP CMC', bar:400},{denom:'8G',desc:'1/2" BSPP CMC',bar:324},
+    {denom:'12G',desc:'3/4" BSPP CMC',bar:250},{denom:'16G',desc:'1" BSPP CMC',  bar:250},
+    {denom:'20G',desc:'1¼" BSPP CMC', bar:160},{denom:'24G',desc:'1½" BSPP CMC',bar:160},
+    {denom:'32G',desc:'2" BSPP CMC',  bar:160},
   ],
   moRows:[
-    {denom:'2G',bar:400},{denom:'4G',bar:400},{denom:'6G',bar:400},{denom:'8G',bar:324},
-    {denom:'12G',bar:160},{denom:'16G',bar:100},{denom:'20G',bar:100},{denom:'24G',bar:160},
+    {denom:'2G',desc:'1/8" BSPP COM', bar:400},{denom:'4G',desc:'1/4" BSPP COM',bar:400},
+    {denom:'6G',desc:'3/8" BSPP COM', bar:400},{denom:'8G',desc:'1/2" BSPP COM',bar:324},
+    {denom:'12G',desc:'3/4" BSPP COM',bar:160},{denom:'16G',desc:'1" BSPP COM',  bar:100},
+    {denom:'20G',desc:'1¼" BSPP COM', bar:100},{denom:'24G',desc:'1½" BSPP COM',bar:160},
   ],
   femaleRows:[
-    {denom:'1N',bar:462},{denom:'2N',bar:448},{denom:'4N',bar:455},{denom:'6N',bar:366},
-    {denom:'8N',bar:338},{denom:'12N',bar:317},{denom:'16N',bar:303},{denom:'20N',bar:345},
-    {denom:'24N',bar:317},{denom:'32N',bar:269},
-    {denom:'1R',bar:462},{denom:'2R',bar:448},{denom:'4R',bar:455},{denom:'6R',bar:366},
-    {denom:'8R',bar:338},{denom:'12R',bar:317},{denom:'16R',bar:303},{denom:'20R',bar:345},
-    {denom:'24R',bar:317},{denom:'32R',bar:269},
+    {denom:'1N',desc:'1/16" NPT', bar:462},{denom:'2N',desc:'1/8" NPT',  bar:448},
+    {denom:'4N',desc:'1/4" NPT',  bar:455},{denom:'6N',desc:'3/8" NPT',  bar:366},
+    {denom:'8N',desc:'1/2" NPT',  bar:338},{denom:'12N',desc:'3/4" NPT', bar:317},
+    {denom:'16N',desc:'1" NPT',   bar:303},{denom:'20N',desc:'1¼" NPT',  bar:345},
+    {denom:'24N',desc:'1½" NPT',  bar:317},{denom:'32N',desc:'2" NPT',   bar:269},
+    {denom:'1R',desc:'1/16" BSPT',bar:462},{denom:'2R',desc:'1/8" BSPT', bar:448},
+    {denom:'4R',desc:'1/4" BSPT', bar:455},{denom:'6R',desc:'3/8" BSPT', bar:366},
+    {denom:'8R',desc:'1/2" BSPT', bar:338},{denom:'12R',desc:'3/4" BSPT',bar:317},
+    {denom:'16R',desc:'1" BSPT',  bar:303},{denom:'20R',desc:'1¼" BSPT', bar:345},
+    {denom:'24R',desc:'1½" BSPT', bar:317},{denom:'32R',desc:'2" BSPT',  bar:269},
   ],
   adaptRows:[
     {denom:'1',  desc:'1/16" fractional'},{denom:'2',  desc:'1/8" fractional'},
@@ -392,6 +404,15 @@ function loadData(){
           const empty=Array.isArray(saved[k])&&saved[k].length===0;
           if(!empty) base[k]=saved[k];
         }
+      }
+      // Migration : ajouter desc si absent dans les lignes de filetage
+      for(const key of ['maleRows','femaleRows','moRows']){
+        if(base[key]) base[key].forEach((row,i)=>{
+          if(!row.desc){
+            const def=(DEFAULTS[key]||[]).find(d=>d.denom===row.denom);
+            row.desc=def?def.desc:'';
+          }
+        });
       }
       return base;
     }
@@ -509,10 +530,15 @@ function parseRef(raw){
   return {typePrefix:tp,typeInfo:ti,segments:segs};
 }
 
+function getThreadDesc(code,key){
+  const row=DATA[key+'Rows'].find(r=>r.denom===code);
+  return (row&&row.desc)?row.desc:code;
+}
+
 function ctLbl(ct,code){
-  if(ct==='M')  return `Filetage mâle ${code}`;
-  if(ct==='F')  return `Taraudage femelle ${code}`;
-  if(ct==='MO') return `Filetage mâle O (COM) ${code}`;
+  if(ct==='M')  return `Filetage mâle ${getThreadDesc(code,'male')}`;
+  if(ct==='F')  return `Taraudage femelle ${getThreadDesc(code,'female')}`;
+  if(ct==='MO') return `Filetage mâle O (COM) ${getThreadDesc(code,'mo')}`;
   if(ct==='A')  { const d=getAdaptMap()[code]; return `Adapteur ${d?code+' ('+d+')':code}`; }
   if(ct==='T')  return `Tube ${getTubeLabel(code)||code}`;
   return code;
@@ -673,7 +699,7 @@ function renderResult({base,limLbl,tRow,details,warnings}){
     const lim=d.label===limLbl;
     return `<div class="detail-row"><span class="detail-key">${d.label}</span><span class="detail-val ${lim?'limiting':''}">${d.bar} bar${lim?' ← limitant':''}</span></div>`;
   }).join('');
-  det+=`<div class="separator"></div><div class="detail-row"><span class="detail-key">Température (${tRow.label})</span><span class="detail-val">× ${tRow.factor}</span></div><div class="detail-row"><span class="detail-key" style="font-weight:700">Pression admissible</span><span class="detail-val" style="font-size:1.05rem;color:#1b3a5c">${fin} bar</span></div>`;
+  det+=`<div class="separator"></div><div class="detail-row"><span class="detail-key">Température ${tRow.label}</span><span class="detail-val">× ${tRow.factor}</span></div><div class="detail-row"><span class="detail-key" style="font-weight:700">Pression admissible</span><span class="detail-val" style="font-size:1.05rem;color:#1b3a5c">${fin} bar</span></div>`;
   c.innerHTML=`<div class="result-card"><div class="result-header ${hc}"><div class="pressure-val">${fin}<span class="pressure-unit">bar</span></div><div class="pressure-label">Pression maximale admissible</div></div><div class="result-body">${det}${warnings.map(w=>`<div class="warn-item">${w}</div>`).join('')}</div></div>`;
 }
 
@@ -738,10 +764,11 @@ function renderTube(){
 
 function renderThread(key){
   document.querySelector(`#tbl-${key} tbody`).innerHTML=DATA[key+'Rows'].map((r,i)=>`<tr>
-    <td>${inp(r.denom,'90px','${key}:'+i,'denom').replace(/'\${key}/,"'"+key)}</td>
-    <td>${inp(r.bar,'80px','${key}:'+i,'bar').replace(/'\${key}/,"'"+key)}</td>
+    <td>${inp(r.denom,'65px',key+':'+i,'denom')}</td>
+    <td>${inp(r.desc||'','140px',key+':'+i,'desc')}</td>
+    <td>${inp(r.bar,'65px',key+':'+i,'bar')}</td>
     <td><button class="btn-del" onclick="delRow('${key}',${i})">×</button></td>
-  </tr>`.replace(/\${key}/g,key)).join('');
+  </tr>`).join('');
 }
 
 function renderTemp(){
@@ -770,7 +797,7 @@ function addAdaptRow(){ DATA.adaptRows.push({denom:'',desc:''}); saveData();rend
 
 function addTypeRow(){ DATA.typeRows.push({code:'',conn1:'T',conn2:'T'}); saveData();renderTypes();flash('types'); }
 function addTubeRow(){ DATA.tubeRows.push({denom:'',taille:'',ep:0,bar:0,psi:null}); saveData();renderTube();flash('tube'); }
-function addThreadRow(k){ DATA[k+'Rows'].push({denom:'',bar:0}); saveData();renderThread(k);flash(k); }
+function addThreadRow(k){ DATA[k+'Rows'].push({denom:'',desc:'',bar:0}); saveData();renderThread(k);flash(k); }
 function addTempRow(){ DATA.tempRows.push({label:'',factor:1}); saveData();renderTemp();flash('temp'); }
 function addRaccord(){
   const v=document.getElementById('newRac').value.trim().toUpperCase(); if(!v)return;
