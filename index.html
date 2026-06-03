@@ -409,6 +409,7 @@ const DEFAULTS = {
 // ═══════════════════════ DONNÉES ═══════════════════════
 const LS_KEY='mawphylok_v2';
 const API_KEY='mwp-9k2x-d4t4-2026';
+const API_URL='https://mawphylok-data.tchimi68.workers.dev';
 let DATA=loadData();
 
 function mergeWithDefaults(saved){
@@ -439,7 +440,7 @@ function saveData(){
   localStorage.setItem(LS_KEY,JSON.stringify(DATA));
   // Si admin connecté → sauvegarder sur le serveur pour tous
   if(pinUnlocked){
-    fetch('/api/data',{
+    fetch(API_URL,{
       method:'POST',
       headers:{'Content-Type':'application/json','X-API-Key':API_KEY},
       body:JSON.stringify(DATA)
@@ -909,7 +910,7 @@ function renderAll(){
 // Chargement initial : serveur en priorité, localStorage en fallback
 (async()=>{
   try{
-    const res=await fetch('/api/data');
+    const res=await fetch(API_URL);
     if(res.ok){
       const serverData=await res.json();
       if(serverData){
