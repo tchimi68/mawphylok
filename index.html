@@ -24,6 +24,13 @@
       border-radius:7px;font-size:.93rem;color:#1a1a2e;background:white;outline:none;transition:border-color .15s}
     .field select:focus,.field input[type=text]:focus{border-color:#1b3a5c}
     .search-wrap{position:relative}
+    .search-row{display:flex;gap:8px}
+    .search-row input{flex:1;padding:10px 12px;border:1.5px solid #dde1e9;border-radius:7px;
+      font-size:.93rem;color:#1a1a2e;background:white;outline:none;transition:border-color .15s}
+    .search-row input:focus{border-color:#1b3a5c}
+    .btn-go{padding:10px 18px;background:#1b3a5c;color:white;border:none;border-radius:7px;
+      font-size:.88rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:background .2s}
+    .btn-go:hover{background:#254f7a}
     .search-drop{position:absolute;top:100%;left:0;right:0;background:white;
       border:1.5px solid #1b3a5c;border-top:none;border-radius:0 0 7px 7px;
       z-index:100;max-height:220px;overflow-y:auto;display:none}
@@ -125,8 +132,11 @@
     <div class="field">
       <label>Référence du raccord</label>
       <div class="search-wrap">
-        <input type="text" id="refSearch" placeholder="Chercher ou saisir une référence…"
-               oninput="onSearch(this.value)" onkeydown="onSearchKey(event)" autocomplete="off">
+        <div class="search-row">
+          <input type="text" id="refSearch" placeholder="Chercher ou saisir une référence…"
+                 oninput="onSearch(this.value)" onkeydown="onSearchKey(event)" autocomplete="off">
+          <button class="btn-go" onclick="processRef(document.getElementById('refSearch').value.trim())">Calculer</button>
+        </div>
         <div id="searchDrop" class="search-drop"></div>
       </div>
     </div>
