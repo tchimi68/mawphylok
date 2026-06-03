@@ -402,6 +402,53 @@ const RE_TH=new RegExp('^('+DENOM+')([NRG])','i');
 const RE_FR=new RegExp('^('+DENOM+')(?![NRG])','i');
 const RE_FE=new RegExp('^('+DENOM+')$','i');
 
+// Parse un segment unique depuis une chaîne ENTIÈRE (doit consommer tout s)
+function parseOneSeg(s){
+  let m;
+  m=s.match(/^(\d+M)$/i); if(m) return {code:m[1].toUpperCase(),rt:'tube'};
+  m=s.match(/^((?:32|24|20|16|12|8|6|4|2|1))([NRG])$/i); if(m) return {code:m[1]+m[2].toUpperCase(),rt:'thread'};
+  m=s.match(/^(32|24|20|16|12|8|6|4|2|1)$/); if(m) return {code:m[1],rt:'tube'};
+  return null;
+}
+
+// Vérifie qu'un code existe dans la table conn1
+function existsC1(code,conn1){
+  if(conn1==='T') return !!getTubeMap()[code];
+  if(conn1==='A') return !!getAdaptMap()[code];
+  return true;
+}
+// Vérifie qu'un code existe dans la table conn2
+function existsC2(code,conn2){
+  if(conn2==='M')  return getMaleMap()[code]!==undefined;
+  if(conn2==='F')  return getFemaleMap()[code]!==undefined;
+  if(conn2==='MO') return getMoMap()[code]!==undefined;
+  if(conn2==='T')  return !!getTubeMap()[code];
+  if(conn2==='A')  return !!getAdaptMap()[code];
+  return true;
+}
+
+// Si un seul segment parsé alors qu'il en faut 2 :
+// 1. Essayer un split (préfixe + reste) où les deux existent dans leurs tables
+// 2. Sinon : règle "même taille" (le code numérique est commun aux deux connexions)
+function fixSingleSeg(seg,ti){
+  const code=seg.code;
+  for(const pref of ['1','2','4','6','8','12','16','20','24','32']){
+    if(!code.startsWith(pref)||pref.length>=code.length) continue;
+    const rest=code.slice(pref.length);
+    const restSeg=parseOneSeg(rest);
+    if(!restSeg) continue;
+    if(existsC1(pref,ti.conn1)&&existsC2(restSeg.code,ti.conn2)){
+      return [{code:pref,rt:'tube'},restSeg];
+    }
+  }
+  // Règle même taille : extrait la partie numérique du thread et l'ajoute en conn1
+  if(seg.rt==='thread'){
+    const nm=seg.code.match(/^(\d+)[NRG]$/);
+    if(nm) return [{code:nm[1],rt:'tube'},seg];
+  }
+  return null;
+}
+
 function parseRef(raw){
   let s=raw.trim();
   const dot=s.indexOf('.'); if(dot>0) s=s.substring(0,dot);
@@ -428,6 +475,13 @@ function parseRef(raw){
     break;
   }
   if(!raw2.length) return {error:'Aucun embout identifié'};
+
+  // Si un seul segment, tenter de le scinder en 2
+  if(raw2.length===1){
+    const fixed=fixSingleSeg(raw2[0],ti);
+    if(fixed) raw2.splice(0,1,...fixed);
+  }
+
   let ti_idx=0;
   const segs=raw2.map(sg=>{
     if(sg.rt==='tube'){
