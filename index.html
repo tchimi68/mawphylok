@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calcul Tenue de Pression — Hy-Lok</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #eef1f5;
+      color: #1a1a2e;
+      padding: 24px 16px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .header {
+      background: #1b3a5c;
+      color: white;
+      padding: 22px 28px;
+    }
+    .header h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: 0.3px; }
+    .header p { font-size: 0.82rem; opacity: 0.7; margin-top: 4px; }
+
+    .body { padding: 24px 28px; }
+
+    .field { margin-bottom: 22px; }
+    .field label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #7a8399;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 7px;
+    }
+    .field select, .field input[type="text"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid #dde1e9;
+      border-radius: 7px;
+      font-size: 0.95rem;
+      color: #1a1a2e;
+      background: white;
+      outline: none;
+      transition: border-color 0.15s;
+      appearance: auto;
+    }
+    .field select:focus, .field input[type="text"]:focus {
+      border-color: #1b3a5c;
+    }
+
+    .section-block {
+      background: #f7f8fb;
+      border: 1.5px solid #e4e8f0;
+      border-radius: 8px;
+      padding: 18px 20px;
+      margin-bottom: 22px;
+    }
+    .section-block h3 {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #7a8399;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 14px;
+    }
+
+    .conn-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .conn-row:last-child { margin-bottom: 0; }
+    .conn-label {
+      flex: 1 1 140px;
+      font-size: 0.9rem;
+      color: #333;
+      font-weight: 500;
+    }
+    .conn-row select {
+      flex: 1 1 180px;
+      padding: 8px 10px;
+      border: 1.5px solid #dde1e9;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      color: #1a1a2e;
+      background: white;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .conn-row select:focus { border-color: #1b3a5c; }
+    .conn-tag {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    .tag-T  { background: #e3f0ff; color: #1a4a8a; }
+    .tag-M  { background: #e6f9ec; color: #1a6a35; }
+    .tag-F  { background: #fff3e0; color: #a05000; }
+    .tag-MO { background: #f3e8ff; color: #6b2fa0; }
+    .tag-A  { background: #f0f0f0; color: #888; }
+
+    .info-box {
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      margin-bottom: 18px;
+    }
+    .info-box.orange { background: #fff3e0; color: #a05000; border-left: 3px solid #ff9800; }
+    .info-box.red    { background: #fdecea; color: #b71c1c; border-left: 3px solid #e53935; }
+    .info-box.blue   { background: #e8f0fe; color: #1a3a7a; border-left: 3px solid #3d6db5; }
+
+    .btn-calc {
+      width: 100%;
+      padding: 13px;
+      background: #1b3a5c;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.4px;
+      transition: background 0.2s, opacity 0.2s;
+    }
+    .btn-calc:hover:not(:disabled) { background: #254f7a; }
+    .btn-calc:disabled { opacity: 0.35; cursor: default; }
+
+    /* Result */
+    .result-card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+    .result-header {
+      padding: 18px 28px;
+      text-align: center;
+    }
+    .result-header.green { background: #e8f5e9; }
+    .result-header.orange { background: #fff8e1; }
+    .result-header.red { background: #fdecea; }
+
+    .pressure-val {
+      font-size: 3rem;
+      font-weight: 800;
+      line-height: 1;
+      color: #1b3a5c;
+    }
+    .pressure-unit { font-size: 1.2rem; font-weight: 600; color: #555; margin-left: 4px; }
+    .pressure-label { font-size: 0.85rem; color: #777; margin-top: 6px; }
+
+    .result-body { padding: 20px 28px; }
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 0;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 0.9rem;
+    }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-key { color: #666; }
+    .detail-val { font-weight: 700; color: #1a1a2e; }
+    .detail-val.limiting { color: #c62828; }
+    .detail-val.muted { color: #aaa; font-weight: 400; font-style: italic; }
+
+    .warn-item {
+      margin-top: 8px;
+      padding: 9px 13px;
+      background: #fff8e1;
+      border-left: 3px solid #ffa000;
+      border-radius: 4px;
+      font-size: 0.83rem;
+      color: #7a5000;
+    }
+
+    .separator { height: 1px; background: #f0f0f0; margin: 12px 0; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="card">
+    <div class="header">
+      <h1>Calcul de Tenue de Pression</h1>
+      <p>Raccords Hy-Lok — Acier Inoxydable 316</p>
+    </div>
+    <div class="body">
+
+      <!-- Sélection référence -->
+      <div class="field">
+        <label>Référence du raccord</label>
+        <select id="refSelect" onchange="onRefChange()">
+          <option value="">— Sélectionner une référence —</option>
+        </select>
+      </div>
+
+      <!-- Zone dynamique -->
+      <div id="dynamicZone" style="display:none;">
+
+        <!-- Message d'info si type non calculable -->
+        <div id="infoMsg" style="display:none;"></div>
+
+        <!-- Bloc connexions + épaisseurs tube -->
+        <div id="connBlock" class="section-block" style="display:none;">
+          <h3>Embouts identifiés</h3>
+          <div id="connRows"></div>
+        </div>
+
+        <!-- Sélection température -->
+        <div id="tempBlock" class="field" style="display:none;">
+          <label>Température d'utilisation</label>
+          <select id="tempSelect">
+            <option value="">— Sélectionner la température —</option>
+          </select>
+        </div>
+
+        <!-- Bouton calculer -->
+        <button class="btn-calc" id="btnCalc" onclick="calculate()" disabled>
+          Calculer la pression admissible
+        </button>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Résultat -->
+  <div id="resultContainer"></div>
+
+</div>
+
+<script>
+// =============================================================================
+// DONNÉES
+// =============================================================================
+
+const TYPE_TABLE = {
+  CUA:  { conn1: 'T', conn2: 'T'  },
+  CUR:  { conn1: 'T', conn2: 'T'  },
+  CLA:  { conn1: 'T', conn2: 'T'  },
+  CTA:  { conn1: 'T', conn2: 'T'  },
+  CXA:  { conn1: 'T', conn2: 'T'  },
+  CBU:  { conn1: 'T', conn2: 'T'  },
+  CMC:  { conn1: 'T', conn2: 'M'  },
+  CMCT: { conn1: 'T', conn2: 'M'  },
+  COM:  { conn1: 'T', conn2: 'MO' },
+  CBMC: { conn1: 'T', conn2: 'M'  },
+  CLMB: { conn1: 'T', conn2: 'M'  },
+  CLMA: { conn1: 'T', conn2: 'M'  },
+  CRTM: { conn1: 'T', conn2: 'M'  },
+  CBTM: { conn1: 'T', conn2: 'M'  },
+  CFC:  { conn1: 'T', conn2: 'F'  },
+  CGC:  { conn1: 'T', conn2: 'F'  },
+  CBFC: { conn1: 'T', conn2: 'F'  },
+  CLF:  { conn1: 'T', conn2: 'F'  },
+  CRTF: { conn1: 'T', conn2: 'F'  },
+  CBTF: { conn1: 'T', conn2: 'F'  },
+  CR:   { conn1: 'T', conn2: 'A'  },
+  CBR:  { conn1: 'T', conn2: 'A'  },
+  // Types "Ne pas prendre en compte"
+  CAL:  null,
+  CRTA: null,
+  CBTA: null,
+  CAM:  null,
+  CAF:  null,
+};
+
+// Tube : dénomination → [{ep (mm), bar, psi?}]
+const TUBE_DATA = {
+  '1':  [{ ep: 0.51, bar: 869,  psi: 12600 }],
+  '2':  [{ ep: 0.89, bar: 586,  psi: 8500  }, { ep: 1.24, bar: 773,  psi: 11200 }],
+  '4':  [{ ep: 0.89, bar: 276,  psi: 4000  }, { ep: 1.24, bar: 352,  psi: 5100  }],
+  '6':  [{ ep: 0.89, bar: 228,  psi: 3300  }, { ep: 1.24, bar: 331,  psi: 4800  }],
+  '8':  [{ ep: 0.89, bar: 179,  psi: 2600  }, { ep: 1.24, bar: 255,  psi: 3700  }, { ep: 1.65, bar: 352, psi: 5100 }],
+  '12': [{ ep: 1.24, bar: 166,  psi: 2400  }, { ep: 1.65, bar: 228,  psi: 3300  }, { ep: 2.11, bar: 290, psi: 4200 }],
+  '16': [{ ep: 1.65, bar: 166,  psi: 2400  }, { ep: 2.11, bar: 214,  psi: 3100  }, { ep: 2.77, bar: 290, psi: 4200 }],
+  '20': [{ ep: 2.77, bar: 228,  psi: 3300  }, { ep: 3.05, bar: 248,  psi: 3600  }],
+  '24': [{ ep: 3.05, bar: 207,  psi: 3000  }, { ep: 3.40, bar: 235,  psi: 3400  }],
+  '32': [{ ep: 3.40, bar: 172,  psi: 2500  }, { ep: 4.77, bar: 248,  psi: 3600  }],
+  '4M':  [{ ep: 1.0, bar: 670 }],
+  '6M':  [{ ep: 1.0, bar: 430 }, { ep: 1.5, bar: 680 }],
+  '8M':  [{ ep: 1.0, bar: 310 }, { ep: 1.5, bar: 490 }],
+  '10M': [{ ep: 1.0, bar: 240 }, { ep: 1.5, bar: 380 }],
+  '12M': [{ ep: 1.0, bar: 200 }, { ep: 1.5, bar: 310 }, { ep: 2.0, bar: 390 }],
+  '16M': [{ ep: 1.5, bar: 240 }, { ep: 2.0, bar: 330 }],
+  '18M': [{ ep: 1.5, bar: 210 }, { ep: 2.0, bar: 290 }],
+  '20M': [{ ep: 1.5, bar: 190 }, { ep: 2.0, bar: 260 }],
+  '25M': [{ ep: 2.0, bar: 200 }, { ep: 2.5, bar: 260 }],
+  '28M': [{ ep: 2.0, bar: 180 }],
+};
+
+// Libellés taille tube
+const TUBE_LABELS = {
+  '1':'1/16"','2':'1/8"','4':'1/4"','6':'3/8"','8':'1/2"',
+  '12':'3/4"','16':'1"','20':'1¼"','24':'1½"','32':'2"',
+  '4M':'4 mm','6M':'6 mm','8M':'8 mm','10M':'10 mm',
+  '12M':'12 mm','16M':'16 mm','18M':'18 mm','20M':'20 mm',
+  '25M':'25 mm','28M':'28 mm',
+};
+
+// Filetage mâle (M) — NPT, BSPT, BSPP CMC
+// Note : 8N et 8R corrigés à 530 bar (770 PSI était une erreur ×10 dans le fichier source)
+const MALE_DATA = {
+  '1N':759, '2N':690, '4N':552, '6N':538, '8N':531, '12N':504, '16N':366, '20N':414, '24N':345, '32N':269,
+  '1R':759, '2R':690, '4R':552, '6R':538, '8R':531, '12R':504, '16R':366, '20R':414, '24R':345, '32R':269,
+  '2G':400, '4G':400, '6G':400, '8G':324, '12G':250, '16G':250, '20G':160, '24G':160, '32G':160,
+};
+
+// Taraudage femelle (F) — NPT, BSPT
+// BSPP G femelle : données manquantes
+const FEMALE_DATA = {
+  '1N':462, '2N':448, '4N':455, '6N':366, '8N':338, '12N':317, '16N':303, '20N':345, '24N':317, '32N':269,
+  '1R':462, '2R':448, '4R':455, '6R':366, '8R':338, '12R':317, '16R':303, '20R':345, '24R':317, '32R':269,
+  // G femelle : non renseigné
+};
+
+// Filetage mâle O — BSPP COM
+const MO_DATA = {
+  '2G':400, '4G':400, '6G':400, '8G':324, '12G':160, '16G':100, '20G':100, '24G':160,
+};
+
+// Facteurs température 316SS
+const TEMP_FACTORS = [
+  { label:'≤ 100 °F  (≤ 38 °C)',   factor:1.00 },
+  { label:'200 °F  (93 °C)',        factor:1.00 },
+  { label:'300 °F  (149 °C)',       factor:1.00 },
+  { label:'400 °F  (204 °C)',       factor:0.96 },
+  { label:'500 °F  (260 °C)',       factor:0.90 },
+  { label:'600 °F  (316 °C)',       factor:0.85 },
+  { label:'700 °F  (371 °C)',       factor:0.82 },
+  { label:'800 °F  (427 °C)',       factor:0.79 },
+  { label:'900 °F  (482 °C)',       factor:0.78 },
+  { label:'1000 °F (538 °C)',       factor:0.76 },
+  { label:'1100 °F (593 °C)',       factor:0.62 },
+  { label:'1200 °F (649 °C)',       factor:0.37 },
+];
+
+const RACCORD_LIST = [
+  "CLMA8M2N","CLA18M","CBU16M","CMC18M8R","CMC16M8G","CR8M12M","CTA18M","CUA6M",
+  "CMC16M8N","CMC12M8N","CAM8M4R","CMC12M4N","CUA12M","CBU12M","CMC8M4G","CTA8",
+  "CMC12M8R","CMC16M8R","CLA8","CMC12M6N","CR810","CMC6M4N","CPC8","CMC8M2N",
+  "CAM12M6R","CBU8","CAM16M8N","CBTF16M8N","CLMA88R","CAFG8M4G","CMC48N",
+  "CBFC12M8N","CLMA6M2R","CBTF12M4N","CR12M10M","CLMA12M6R","CAM86R",
+  "CAM12M4N","CUR12M8","CMC6M6R","CAM88R","CMC16M12R","CMC10M4R","CAF8M4N",
+  "CPC10M","CMC66R","CTR664","CMC88R","CUR16M10","CR48","CR8M6M","CAF12M4N",
+  "CR20M12M","CMC44N","CR12M18M","CLMA8M8N","CMC20M8N","CUA8","CR12M16M","CR64",
+  "CAFG10M4G","CFC8M4N","CMCT68N","CMC46R","CMC10M6N","CXA10M","CR12M8M","CPA20M",
+  "CLMA12M8N","CPA8","CMC64N","CUA8M","CUA-8M-OP1 S316","CR18M12","CBU3M",
+  "CMC8M4G","CMC8M8R","CR86","CBU20M","CTR16M16M6M","CMC44R","CLMA12M4N",
+  "CUR16M12M","CAF6M4N","CPC16M","CR16M12M","CBTF12M4N","CMC8M6R","CRTF10M4N",
+  "CAF12M4N","CTRM10M10M6M","CFC16M8N","CAFG8M4G","CMC12M8G","CTA12M","CMC12M6R",
+  "CTA16M","CAM8M4N","CMC12M4G","CMC6M2R","CTA6M","CBU16M","CMC10M8R","CR6M12M",
+  "CBU8","CUR12M8M","CUA16M","CUA8M","CAM12M8N","CAM16M8R",
+  "CFC8M8R","CAM16M8R","CMC12M12G","CMC8M8N","CFC6M4N",
+  "CBU6M","CAF12M8N","CMC8M2R","CMC12M4R","CFC12M8N","CTA12M","CXA12M","CAM12M6R",
+  "CBU4M","CMC6M6R","CPA12M","CLA12M","CR4M6M","CR12M16M","CTA16M","CMC12M8R",
+  "CUR8M6M","CAM64R","CAM6M2R","CPR12M8M","CGC6M6G","CAM12M4R","CXA6M","CAM44R",
+  "CPA8M","CMC8M8G","CBU8M","CMC8M4N","CAF88N","CMC88N","CMC6M2N","CAF84N",
+  "CMC12M12N","CMC86R","CAM44N","CAM1212N","CGC6M8G","CMC812N",
+];
+
+// =============================================================================
+// PARSING
+// =============================================================================
+
+function parseRef(fullRef) {
+  let s = fullRef.trim();
+
+  // Supprimer suffixe matériau (.SS316, .BRASS, .SS31, etc.)
+  const dotIdx = s.indexOf('.');
+  if (dotIdx > 0) s = s.substring(0, dotIdx);
+
+  // Supprimer ce qui suit un espace ou + (ex: +G37)
+  s = s.replace(/[\s+].*$/, '');
+
+  // Supprimer options -OPxx
+  s = s.replace(/-OP\d+.*$/i, '');
+
+  // Extraire le préfixe type (lettres majuscules initiales)
+  const typeMatch = s.match(/^([A-Z]+)/);
+  if (!typeMatch) return { error: 'Format non reconnu' };
+
+  const typePrefix = typeMatch[1];
+  let remainder = s.slice(typePrefix.length);
+
+  // Gérer tiret séparateur (CUA-8M)
+  if (remainder.startsWith('-')) remainder = remainder.slice(1);
+  remainder = remainder.replace(/-/g, '');
+
+  // Vérifier le type
+  if (!(typePrefix in TYPE_TABLE)) {
+    return { error: `Type "${typePrefix}" non répertorié`, typePrefix };
+  }
+  const typeInfo = TYPE_TABLE[typePrefix];
+  if (typeInfo === null) {
+    return { skip: true, typePrefix };
+  }
+
+  // Parser les segments bruts, puis assigner les types par position
+  // Dénominations valides (du plus long au plus court pour éviter la gloutonnie) :
+  // - tube métrique : n'importe quel nombre + M (priorité 1, sans ambiguïté)
+  // - filetage / tube fractional : 32,24,20,16,12,8,6,4,2,1
+  const DENOM = '(?:32|24|20|16|12|8|6|4|2|1)';
+
+  const rawSegs = [];
+  let r = remainder;
+
+  while (r.length > 0) {
+    // 1. Tube métrique : \d+M (unambiguë — M ne peut pas être un suffixe de filetage)
+    let m = r.match(/^(\d+M)/i);
+    if (m) {
+      rawSegs.push({ code: m[1].toUpperCase(), rawType: 'tube' });
+      r = r.slice(m[1].length);
+      continue;
+    }
+    // 2. Filetage : dénomination connue + [NRG]
+    m = r.match(new RegExp('^(' + DENOM + ')([NRG])', 'i'));
+    if (m) {
+      rawSegs.push({ code: m[1] + m[2].toUpperCase(), rawType: 'thread' });
+      r = r.slice(m[1].length + 1);
+      continue;
+    }
+    // 3. Tube fractional : dénomination connue NON suivie de [NRG]
+    m = r.match(new RegExp('^(' + DENOM + ')(?![NRG]|$(?!$))', 'i'));
+    if (m) {
+      rawSegs.push({ code: m[1], rawType: 'tube' });
+      r = r.slice(m[1].length);
+      continue;
+    }
+    // 3b. Tube fractional en fin de chaîne (lookahead ne matche pas $ seul)
+    m = r.match(new RegExp('^(' + DENOM + ')$', 'i'));
+    if (m) {
+      rawSegs.push({ code: m[1], rawType: 'tube' });
+      r = r.slice(m[1].length);
+      continue;
+    }
+    // Caractère inconnu → arrêt
+    break;
+  }
+
+  // Assigner les types par position :
+  // - segments tube : 1er → conn1 (toujours T), suivants → conn2
+  // - segments filetage → conn2
+  let tubeIdx = 0;
+  const segments = rawSegs.map(seg => {
+    if (seg.rawType === 'tube') {
+      const connType = tubeIdx === 0 ? 'T' : typeInfo.conn2;
+      tubeIdx++;
+      const lbl = connType === 'T'
+        ? 'Tube ' + (TUBE_LABELS[seg.code] || seg.code)
+        : connTypeLabel(connType, seg.code);
+      return { code: seg.code, connType, label: lbl };
+    } else {
+      const connType = typeInfo.conn2;
+      return { code: seg.code, connType, label: connTypeLabel(connType, seg.code) };
+    }
+  });
+
+  if (segments.length === 0) {
+    return { error: 'Aucun embout identifié dans la référence' };
+  }
+
+  return { typePrefix, typeInfo, segments };
+}
+
+function connTypeLabel(ct, code) {
+  if (ct === 'M')  return `Filetage mâle ${code}`;
+  if (ct === 'F')  return `Taraudage femelle ${code}`;
+  if (ct === 'MO') return `Filetage mâle O (COM) ${code}`;
+  if (ct === 'A')  return `Adapteur ${code}`;
+  return code;
+}
+
+// =============================================================================
+// ÉTAT UI
+// =============================================================================
+
+let currentParsed = null;
+
+// =============================================================================
+// INIT
+// =============================================================================
+
+function init() {
+  // Liste de raccords : dédupliquée, triée, types "Ne pas prendre en compte" exclus
+  const sel = document.getElementById('refSelect');
+  const uniq = [...new Set(RACCORD_LIST)].sort();
+  uniq.forEach(ref => {
+    const parsed = parseRef(ref);
+    if (parsed.skip) return; // exclure CAF, CAM, CAL, CRTA, CBTA
+    const opt = document.createElement('option');
+    opt.value = ref;
+    opt.textContent = ref;
+    sel.appendChild(opt);
+  });
+
+  // Températures
+  const tempSel = document.getElementById('tempSelect');
+  TEMP_FACTORS.forEach((t, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = `${t.label}   (× ${t.factor})`;
+    tempSel.appendChild(opt);
+  });
+  // Sélectionner la première option par défaut
+  tempSel.value = '0';
+}
+
+// =============================================================================
+// ÉVÉNEMENTS
+// =============================================================================
+
+function onRefChange() {
+  const ref = document.getElementById('refSelect').value;
+  const dynamicZone = document.getElementById('dynamicZone');
+  document.getElementById('resultContainer').innerHTML = '';
+
+  if (!ref) {
+    dynamicZone.style.display = 'none';
+    return;
+  }
+
+  dynamicZone.style.display = 'block';
+  const parsed = parseRef(ref);
+  currentParsed = parsed;
+
+  const infoMsg    = document.getElementById('infoMsg');
+  const connBlock  = document.getElementById('connBlock');
+  const connRows   = document.getElementById('connRows');
+  const tempBlock  = document.getElementById('tempBlock');
+  const btnCalc    = document.getElementById('btnCalc');
+
+  // Reset
+  infoMsg.style.display = 'none';
+  connBlock.style.display = 'none';
+  tempBlock.style.display = 'none';
+  btnCalc.disabled = true;
+  connRows.innerHTML = '';
+
+  if (parsed.error) {
+    infoMsg.className = 'info-box red';
+    infoMsg.textContent = parsed.error;
+    infoMsg.style.display = 'block';
+    return;
+  }
+
+  if (parsed.skip) {
+    infoMsg.className = 'info-box orange';
+    infoMsg.textContent = `Ce type de raccord (${parsed.typePrefix}) n'est pas pris en charge dans le calcul.`;
+    infoMsg.style.display = 'block';
+    return;
+  }
+
+  // Construire les lignes de connexion
+  connBlock.style.display = 'block';
+  const seenTubes = new Set();
+
+  parsed.segments.forEach(seg => {
+    const row = document.createElement('div');
+    row.className = 'conn-row';
+
+    const tag = document.createElement('span');
+    tag.className = `conn-tag tag-${seg.connType}`;
+    tag.textContent = seg.connType;
+
+    const lbl = document.createElement('span');
+    lbl.className = 'conn-label';
+    lbl.textContent = seg.label;
+
+    row.appendChild(tag);
+    row.appendChild(lbl);
+
+    if (seg.connType === 'T') {
+      if (!seenTubes.has(seg.code)) {
+        seenTubes.add(seg.code);
+        const tubeOptions = TUBE_DATA[seg.code];
+
+        if (!tubeOptions) {
+          const span = document.createElement('span');
+          span.style.cssText = 'font-size:0.82rem; color:#c62828; font-style:italic;';
+          span.textContent = 'Taille non reconnue';
+          row.appendChild(span);
+        } else {
+          const sel = document.createElement('select');
+          sel.id = `tube_${seg.code}`;
+          sel.onchange = checkCalcReady;
+          const defOpt = document.createElement('option');
+          defOpt.value = '';
+          defOpt.textContent = '— Épaisseur —';
+          sel.appendChild(defOpt);
+          tubeOptions.forEach(o => {
+            const opt = document.createElement('option');
+            opt.value = o.bar;
+            opt.textContent = `${o.ep} mm  →  ${o.bar} bar`;
+            sel.appendChild(opt);
+          });
+          row.appendChild(sel);
+        }
+      } else {
+        // Même tube déjà affiché (ex: union même taille)
+        const span = document.createElement('span');
+        span.style.cssText = 'font-size:0.82rem; color:#888; font-style:italic;';
+        span.textContent = 'même taille — voir ci-dessus';
+        row.appendChild(span);
+      }
+    } else {
+      // Connexion non-tube : afficher la pression de référence si disponible
+      const p = getConnPressure(seg);
+      const span = document.createElement('span');
+      if (p === null) {
+        span.style.cssText = 'font-size:0.82rem; color:#a05000; font-style:italic;';
+        span.textContent = 'Données manquantes';
+      } else if (p === undefined) {
+        span.style.cssText = 'font-size:0.82rem; color:#888; font-style:italic;';
+        span.textContent = 'Ignoré (adapteur)';
+      } else {
+        span.style.cssText = 'font-size:0.88rem; color:#2e7d32; font-weight:600;';
+        span.textContent = `${p} bar`;
+      }
+      row.appendChild(span);
+    }
+
+    connRows.appendChild(row);
+  });
+
+  tempBlock.style.display = 'block';
+  checkCalcReady();
+}
+
+function getConnPressure(seg) {
+  if (seg.connType === 'T') return null; // handled separately
+  if (seg.connType === 'A') return undefined;
+  if (seg.connType === 'M')  return MALE_DATA[seg.code] !== undefined ? MALE_DATA[seg.code] : null;
+  if (seg.connType === 'F')  return FEMALE_DATA[seg.code] !== undefined ? FEMALE_DATA[seg.code] : null;
+  if (seg.connType === 'MO') return MO_DATA[seg.code] !== undefined ? MO_DATA[seg.code] : null;
+  return null;
+}
+
+function checkCalcReady() {
+  if (!currentParsed || currentParsed.error || currentParsed.skip) {
+    document.getElementById('btnCalc').disabled = true;
+    return;
+  }
+
+  const seenTubes = new Set();
+  let allSelected = true;
+
+  currentParsed.segments.forEach(seg => {
+    if (seg.connType !== 'T') return;
+    if (seenTubes.has(seg.code)) return;
+    seenTubes.add(seg.code);
+
+    if (!TUBE_DATA[seg.code]) return; // taille inconnue, on ignore
+
+    const val = document.getElementById(`tube_${seg.code}`)?.value;
+    if (!val) allSelected = false;
+  });
+
+  const hasTempSelected = document.getElementById('tempSelect').value !== '';
+  document.getElementById('btnCalc').disabled = !(allSelected && hasTempSelected);
+}
+
+// =============================================================================
+// CALCUL
+// =============================================================================
+
+function calculate() {
+  const parsed = currentParsed;
+  if (!parsed || parsed.error || parsed.skip) return;
+
+  const tempIdx = parseInt(document.getElementById('tempSelect').value);
+  const tempInfo = TEMP_FACTORS[tempIdx];
+
+  const details = [];    // lignes du détail
+  const warnings = [];   // avertissements
+  const tubePressures  = [];
+  const otherPressures = [];
+
+  const seenTubes = new Set();
+
+  parsed.segments.forEach(seg => {
+    if (seg.connType === 'T') {
+      if (seenTubes.has(seg.code)) {
+        details.push({ label: seg.label, bar: null, note: 'même tube (même épaisseur)' });
+        return;
+      }
+      seenTubes.add(seg.code);
+
+      if (!TUBE_DATA[seg.code]) {
+        warnings.push(`Taille tube "${seg.code}" non reconnue — connexion ignorée`);
+        details.push({ label: seg.label, bar: null, note: 'taille inconnue' });
+        return;
+      }
+
+      const val = document.getElementById(`tube_${seg.code}`)?.value;
+      if (!val) return;
+      const bar = parseFloat(val);
+      tubePressures.push({ label: seg.label, bar });
+      details.push({ label: seg.label, bar });
+
+    } else if (seg.connType === 'A') {
+      details.push({ label: seg.label, bar: null, note: 'adapteur — ignoré' });
+
+    } else {
+      const bar = getConnPressure(seg);
+      if (bar === null) {
+        const isG = seg.code.endsWith('G');
+        const msg = isG && seg.connType === 'F'
+          ? `BSPP femelle ${seg.code} : données manquantes (à compléter)`
+          : `${seg.label} : données manquantes`;
+        warnings.push(msg);
+        details.push({ label: seg.label, bar: null, note: 'données manquantes' });
+      } else {
+        otherPressures.push({ label: seg.label, bar });
+        details.push({ label: seg.label, bar });
+      }
+    }
+  });
+
+  // Règle : si connexion(s) tube → on utilise uniquement la pression tube
+  // Sinon : minimum de toutes les connexions
+  let basePressure = null;
+  let limitingLabel = '';
+
+  if (tubePressures.length > 0) {
+    const min = tubePressures.reduce((a, b) => a.bar < b.bar ? a : b);
+    basePressure = min.bar;
+    limitingLabel = min.label;
+  } else if (otherPressures.length > 0) {
+    const min = otherPressures.reduce((a, b) => a.bar < b.bar ? a : b);
+    basePressure = min.bar;
+    limitingLabel = min.label;
+  }
+
+  renderResult({ basePressure, limitingLabel, tempInfo, details, warnings });
+}
+
+// =============================================================================
+// RENDU RÉSULTAT
+// =============================================================================
+
+function renderResult({ basePressure, limitingLabel, tempInfo, details, warnings }) {
+  const container = document.getElementById('resultContainer');
+
+  if (basePressure === null) {
+    container.innerHTML = `
+      <div class="result-card">
+        <div class="result-header red">
+          <div style="font-size:1rem; color:#b71c1c; font-weight:600;">
+            Impossible de calculer — données insuffisantes
+          </div>
+        </div>
+        <div class="result-body">
+          ${warnings.map(w => `<div class="warn-item">${w}</div>`).join('')}
+        </div>
+      </div>`;
+    return;
+  }
+
+  const finalPressure = Math.round(basePressure * tempInfo.factor * 10) / 10;
+  const headerClass = warnings.length > 0 ? 'orange' : 'green';
+
+  // Lignes de détail
+  let detailHTML = details.map(d => {
+    if (d.bar === null) {
+      return `<div class="detail-row">
+        <span class="detail-key">${d.label}</span>
+        <span class="detail-val muted">${d.note || '—'}</span>
+      </div>`;
+    }
+    const isLimiting = d.label === limitingLabel;
+    return `<div class="detail-row">
+      <span class="detail-key">${d.label}</span>
+      <span class="detail-val ${isLimiting ? 'limiting' : ''}">${d.bar} bar${isLimiting ? '&nbsp; ← limitant' : ''}</span>
+    </div>`;
+  }).join('');
+
+  detailHTML += `<div class="separator"></div>`;
+  detailHTML += `<div class="detail-row">
+    <span class="detail-key">Température (${tempInfo.label})</span>
+    <span class="detail-val">× ${tempInfo.factor}</span>
+  </div>`;
+  detailHTML += `<div class="detail-row" style="margin-top:4px;">
+    <span class="detail-key" style="font-weight:700; color:#1a1a2e;">Pression admissible</span>
+    <span class="detail-val" style="font-size:1.05rem; color:#1b3a5c;">${finalPressure} bar</span>
+  </div>`;
+
+  const warnsHTML = warnings.map(w => `<div class="warn-item">${w}</div>`).join('');
+
+  container.innerHTML = `
+    <div class="result-card">
+      <div class="result-header ${headerClass}">
+        <div class="pressure-val">${finalPressure}<span class="pressure-unit">bar</span></div>
+        <div class="pressure-label">Pression maximale admissible</div>
+      </div>
+      <div class="result-body">
+        ${detailHTML}
+        ${warnsHTML}
+      </div>
+    </div>`;
+}
+
+// =============================================================================
+init();
+</script>
+</body>
+</html>
