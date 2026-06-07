@@ -64,10 +64,10 @@
     .pressure-unit{font-size:1.1rem;font-weight:600;color:#555;margin-left:3px}
     .pressure-label{font-size:.82rem;color:#777;margin-top:4px}
     .result-body{padding:16px 24px}
-    .detail-row{display:flex;justify-content:space-between;align-items:center;
+    .detail-row{display:flex;justify-content:space-between;align-items:flex-start;
       padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:.88rem}
     .detail-row:last-child{border-bottom:none}
-    .detail-key{color:#666}.detail-val{font-weight:700}
+    .detail-key{color:#666;flex:1;padding-right:8px}.detail-val{font-weight:700;text-align:right;flex-shrink:0}
     .detail-val.limiting{color:#c62828}.detail-val.muted{color:#aaa;font-weight:400;font-style:italic}
     .separator{height:1px;background:#f0f0f0;margin:10px 0}
     .warn-item{margin-top:8px;padding:8px 12px;background:#fff8e1;
@@ -132,6 +132,7 @@
     .add-row input{flex:1;padding:7px 10px;border:1.5px solid #dde1e9;border-radius:6px;
       font-size:.85rem;outline:none}
     .add-row input:focus{border-color:#1b3a5c}
+    .note-formula{font-size:.76rem;color:#7a8399;font-weight:400;font-style:normal;margin-top:1px}
   </style>
 </head>
 <body>
@@ -163,6 +164,12 @@
       <h3>Embouts identifiés</h3>
       <div id="connRows"></div>
     </div>
+    <div id="matBlock" class="field" style="display:none">
+      <label>Matériau du tube</label>
+      <select id="matSelect" onchange="checkReady()">
+        <option value="">— Sélectionner —</option>
+      </select>
+    </div>
     <div id="tempBlock" class="field" style="display:none">
       <label>Température d'utilisation</label>
       <select id="tempSelect" onchange="checkReady()">
@@ -187,6 +194,7 @@
     <button class="etab-btn" onclick="showEtab(event,'female')">Femelle (F)</button>
     <button class="etab-btn" onclick="showEtab(event,'adapt')">Adapteur (A)</button>
     <button class="etab-btn" onclick="showEtab(event,'temp')">Température</button>
+    <button class="etab-btn" onclick="showEtab(event,'mat')">Matériaux</button>
   </div>
 
   <div id="esec-types" class="editor-section active"><div class="editor-card">
@@ -213,7 +221,7 @@
   <div id="esec-tube" class="editor-section"><div class="editor-card">
     <h2>Données Tube <span id="si-tube" class="save-ind">✓ Sauvegardé</span></h2>
     <table class="data-table" id="tbl-tube">
-      <thead><tr><th>Dénom.</th><th>Taille</th><th>Épais.</th><th>Bar</th><th>PSI</th><th></th></tr></thead>
+      <thead><tr><th>Dénom.</th><th>Taille</th><th>∅ext. (mm)</th><th>Épais.</th><th>Bar réf.</th><th>PSI réf.</th><th></th></tr></thead>
       <tbody></tbody>
     </table>
     <button class="btn-add" onclick="addTubeRow()">+ Ajouter</button>
@@ -260,10 +268,23 @@
   <div id="esec-temp" class="editor-section"><div class="editor-card">
     <h2>Facteurs de température <span id="si-temp" class="save-ind">✓ Sauvegardé</span></h2>
     <table class="data-table" id="tbl-temp">
-      <thead><tr><th>Température</th><th>Facteur</th><th></th></tr></thead><tbody></tbody>
+      <thead><tr><th>Température</th><th>°C max</th><th>Facteur raccords</th><th></th></tr></thead><tbody></tbody>
     </table>
     <button class="btn-add" onclick="addTempRow()">+ Ajouter</button>
     <button class="btn-reset" onclick="resetSection('temp')">Réinitialiser</button>
+  </div></div>
+
+  <div id="esec-mat" class="editor-section"><div class="editor-card">
+    <h2>Matériaux — Rp1.0 (MPa) selon DIN 2413 <span id="si-mat" class="save-ind">✓ Sauvegardé</span></h2>
+    <p style="font-size:.8rem;color:#888;margin-bottom:12px">Valeurs Rp1.0 (MPa) aux 8 températures de référence. Laisser vide si donnée non disponible pour ce matériau.</p>
+    <div style="overflow-x:auto">
+    <table class="data-table" id="tbl-mat">
+      <thead><tr><th>Nuance</th><th>20°C</th><th>100°C</th><th>150°C</th><th>200°C</th><th>250°C</th><th>300°C</th><th>350°C</th><th>400°C</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+    </div>
+    <button class="btn-add" onclick="addMatRow()">+ Ajouter</button>
+    <button class="btn-reset" onclick="resetSection('mat')">Réinitialiser</button>
   </div></div>
 </div>
 
@@ -287,47 +308,47 @@ const DEFAULTS = {
     {code:'CAF',conn1:'A',conn2:'F'},
   ],
   tubeRows:[
-    {denom:'1', taille:'1/16"',ep:0.51,bar:869, psi:12600},
-    {denom:'2', taille:'1/8"', ep:0.89,bar:586, psi:8500},
-    {denom:'2', taille:'1/8"', ep:1.24,bar:773, psi:11200},
-    {denom:'4', taille:'1/4"', ep:0.89,bar:276, psi:4000},
-    {denom:'4', taille:'1/4"', ep:1.24,bar:352, psi:5100},
-    {denom:'6', taille:'3/8"', ep:0.89,bar:228, psi:3300},
-    {denom:'6', taille:'3/8"', ep:1.24,bar:331, psi:4800},
-    {denom:'8', taille:'1/2"', ep:0.89,bar:179, psi:2600},
-    {denom:'8', taille:'1/2"', ep:1.24,bar:255, psi:3700},
-    {denom:'8', taille:'1/2"', ep:1.65,bar:352, psi:5100},
-    {denom:'12',taille:'3/4"', ep:1.24,bar:166, psi:2400},
-    {denom:'12',taille:'3/4"', ep:1.65,bar:228, psi:3300},
-    {denom:'12',taille:'3/4"', ep:2.11,bar:290, psi:4200},
-    {denom:'16',taille:'1"',   ep:1.65,bar:166, psi:2400},
-    {denom:'16',taille:'1"',   ep:2.11,bar:214, psi:3100},
-    {denom:'16',taille:'1"',   ep:2.77,bar:290, psi:4200},
-    {denom:'20',taille:'1¼"', ep:2.77,bar:228, psi:3300},
-    {denom:'20',taille:'1¼"', ep:3.05,bar:248, psi:3600},
-    {denom:'24',taille:'1½"', ep:3.05,bar:207, psi:3000},
-    {denom:'24',taille:'1½"', ep:3.40,bar:235, psi:3400},
-    {denom:'32',taille:'2"',   ep:3.40,bar:172, psi:2500},
-    {denom:'32',taille:'2"',   ep:4.77,bar:248, psi:3600},
-    {denom:'4M', taille:'4 mm', ep:1.0,bar:670,psi:null},
-    {denom:'6M', taille:'6 mm', ep:1.0,bar:430,psi:null},
-    {denom:'6M', taille:'6 mm', ep:1.5,bar:680,psi:null},
-    {denom:'8M', taille:'8 mm', ep:1.0,bar:310,psi:null},
-    {denom:'8M', taille:'8 mm', ep:1.5,bar:490,psi:null},
-    {denom:'10M',taille:'10 mm',ep:1.0,bar:240,psi:null},
-    {denom:'10M',taille:'10 mm',ep:1.5,bar:380,psi:null},
-    {denom:'12M',taille:'12 mm',ep:1.0,bar:200,psi:null},
-    {denom:'12M',taille:'12 mm',ep:1.5,bar:310,psi:null},
-    {denom:'12M',taille:'12 mm',ep:2.0,bar:390,psi:null},
-    {denom:'16M',taille:'16 mm',ep:1.5,bar:240,psi:null},
-    {denom:'16M',taille:'16 mm',ep:2.0,bar:330,psi:null},
-    {denom:'18M',taille:'18 mm',ep:1.5,bar:210,psi:null},
-    {denom:'18M',taille:'18 mm',ep:2.0,bar:290,psi:null},
-    {denom:'20M',taille:'20 mm',ep:1.5,bar:190,psi:null},
-    {denom:'20M',taille:'20 mm',ep:2.0,bar:260,psi:null},
-    {denom:'25M',taille:'25 mm',ep:2.0,bar:200,psi:null},
-    {denom:'25M',taille:'25 mm',ep:2.5,bar:260,psi:null},
-    {denom:'28M',taille:'28 mm',ep:2.0,bar:180,psi:null},
+    {denom:'1', taille:'1/16"', od:1.59, ep:0.51,bar:869, psi:12600},
+    {denom:'2', taille:'1/8"',  od:3.18, ep:0.89,bar:586, psi:8500},
+    {denom:'2', taille:'1/8"',  od:3.18, ep:1.24,bar:773, psi:11200},
+    {denom:'4', taille:'1/4"',  od:6.35, ep:0.89,bar:276, psi:4000},
+    {denom:'4', taille:'1/4"',  od:6.35, ep:1.24,bar:352, psi:5100},
+    {denom:'6', taille:'3/8"',  od:9.53, ep:0.89,bar:228, psi:3300},
+    {denom:'6', taille:'3/8"',  od:9.53, ep:1.24,bar:331, psi:4800},
+    {denom:'8', taille:'1/2"',  od:12.7, ep:0.89,bar:179, psi:2600},
+    {denom:'8', taille:'1/2"',  od:12.7, ep:1.24,bar:255, psi:3700},
+    {denom:'8', taille:'1/2"',  od:12.7, ep:1.65,bar:352, psi:5100},
+    {denom:'12',taille:'3/4"',  od:19.05,ep:1.24,bar:166, psi:2400},
+    {denom:'12',taille:'3/4"',  od:19.05,ep:1.65,bar:228, psi:3300},
+    {denom:'12',taille:'3/4"',  od:19.05,ep:2.11,bar:290, psi:4200},
+    {denom:'16',taille:'1"',    od:25.4, ep:1.65,bar:166, psi:2400},
+    {denom:'16',taille:'1"',    od:25.4, ep:2.11,bar:214, psi:3100},
+    {denom:'16',taille:'1"',    od:25.4, ep:2.77,bar:290, psi:4200},
+    {denom:'20',taille:'1¼"',  od:31.75,ep:2.77,bar:228, psi:3300},
+    {denom:'20',taille:'1¼"',  od:31.75,ep:3.05,bar:248, psi:3600},
+    {denom:'24',taille:'1½"',  od:38.1, ep:3.05,bar:207, psi:3000},
+    {denom:'24',taille:'1½"',  od:38.1, ep:3.40,bar:235, psi:3400},
+    {denom:'32',taille:'2"',    od:50.8, ep:3.40,bar:172, psi:2500},
+    {denom:'32',taille:'2"',    od:50.8, ep:4.77,bar:248, psi:3600},
+    {denom:'4M', taille:'4 mm', od:4,   ep:1.0, bar:670, psi:null},
+    {denom:'6M', taille:'6 mm', od:6,   ep:1.0, bar:430, psi:null},
+    {denom:'6M', taille:'6 mm', od:6,   ep:1.5, bar:680, psi:null},
+    {denom:'8M', taille:'8 mm', od:8,   ep:1.0, bar:310, psi:null},
+    {denom:'8M', taille:'8 mm', od:8,   ep:1.5, bar:490, psi:null},
+    {denom:'10M',taille:'10 mm',od:10,  ep:1.0, bar:240, psi:null},
+    {denom:'10M',taille:'10 mm',od:10,  ep:1.5, bar:380, psi:null},
+    {denom:'12M',taille:'12 mm',od:12,  ep:1.0, bar:200, psi:null},
+    {denom:'12M',taille:'12 mm',od:12,  ep:1.5, bar:310, psi:null},
+    {denom:'12M',taille:'12 mm',od:12,  ep:2.0, bar:390, psi:null},
+    {denom:'16M',taille:'16 mm',od:16,  ep:1.5, bar:240, psi:null},
+    {denom:'16M',taille:'16 mm',od:16,  ep:2.0, bar:330, psi:null},
+    {denom:'18M',taille:'18 mm',od:18,  ep:1.5, bar:210, psi:null},
+    {denom:'18M',taille:'18 mm',od:18,  ep:2.0, bar:290, psi:null},
+    {denom:'20M',taille:'20 mm',od:20,  ep:1.5, bar:190, psi:null},
+    {denom:'20M',taille:'20 mm',od:20,  ep:2.0, bar:260, psi:null},
+    {denom:'25M',taille:'25 mm',od:25,  ep:2.0, bar:200, psi:null},
+    {denom:'25M',taille:'25 mm',od:25,  ep:2.5, bar:260, psi:null},
+    {denom:'28M',taille:'28 mm',od:28,  ep:2.0, bar:180, psi:null},
   ],
   maleRows:[
     {denom:'1N',desc:'1/16" NPT', bar:759},{denom:'2N',desc:'1/8" NPT',  bar:690},
@@ -377,12 +398,33 @@ const DEFAULTS = {
     {denom:'25M',desc:'25 mm metric'},    {denom:'28M',desc:'28 mm metric'},
   ],
   tempRows:[
-    {label:'≤100°F (≤38°C)',factor:1.00},{label:'200°F (93°C)',factor:1.00},
-    {label:'300°F (149°C)',factor:1.00},{label:'400°F (204°C)',factor:0.96},
-    {label:'500°F (260°C)',factor:0.90},{label:'600°F (316°C)',factor:0.85},
-    {label:'700°F (371°C)',factor:0.82},{label:'800°F (427°C)',factor:0.79},
-    {label:'900°F (482°C)',factor:0.78},{label:'1000°F (538°C)',factor:0.76},
-    {label:'1100°F (593°C)',factor:0.62},{label:'1200°F (649°C)',factor:0.37},
+    {label:'≤100°F (≤38°C)', celsius:38,  factor:1.00},
+    {label:'200°F (93°C)',   celsius:93,  factor:1.00},
+    {label:'300°F (149°C)',  celsius:149, factor:1.00},
+    {label:'400°F (204°C)',  celsius:204, factor:0.96},
+    {label:'500°F (260°C)',  celsius:260, factor:0.90},
+    {label:'600°F (316°C)',  celsius:316, factor:0.85},
+    {label:'700°F (371°C)',  celsius:371, factor:0.82},
+    {label:'800°F (427°C)',  celsius:427, factor:0.79},
+    {label:'900°F (482°C)',  celsius:482, factor:0.78},
+    {label:'1000°F (538°C)', celsius:538, factor:0.76},
+    {label:'1100°F (593°C)', celsius:593, factor:0.62},
+    {label:'1200°F (649°C)', celsius:649, factor:0.37},
+  ],
+  matRows:[
+    {grade:'316L',      rp:[225,199,181,167,157,145,139,135]},
+    {grade:'304L',      rp:[215,181,162,147,137,127,121,116]},
+    {grade:'321',       rp:[235,208,195,185,175,167,161,156]},
+    {grade:'316Ti',     rp:[245,218,206,196,186,175,169,164]},
+    {grade:'904L',      rp:[250,205,195,185,175,165,160,155]},
+    {grade:'Sanicro 28',rp:[250,220,205,190,185,180,175,165]},
+    {grade:'Alloy 825', rp:[265,215,null,200,null,185,null,175]},
+    {grade:'Alloy 400', rp:[210,null,null,null,null,null,null,null]},
+    {grade:'254 SMO',   rp:[340,270,null,225,null,200,null,190]},
+    {grade:'317L',      rp:[412,206,null,177,null,156,null,144]},
+    {grade:'SAF2507',   rp:[530,480,445,420,405,395,null,null]},
+    {grade:'Alloy C276',rp:[330,305,null,275,null,245,null,230]},
+    {grade:'Cub1',      rp:[60, null,null,null,null,null,null,null]},
   ],
   raccordList:[
     "CLMA8M2N","CLA18M","CBU16M","CMC18M8R","CMC16M8G","CR8M12M","CTA18M","CUA6M",
@@ -420,11 +462,26 @@ function mergeWithDefaults(saved){
       if(!empty) base[k]=saved[k];
     }
   }
+  // Fill missing desc in thread rows
   for(const key of ['maleRows','femaleRows','moRows']){
     if(base[key]) base[key].forEach(row=>{
       if(!row.desc){ const def=(DEFAULTS[key]||[]).find(d=>d.denom===row.denom); row.desc=def?def.desc:''; }
     });
   }
+  // Migration: fill missing od in tubeRows
+  if(base.tubeRows) base.tubeRows.forEach(row=>{
+    if(row.od==null){
+      const def=DEFAULTS.tubeRows.find(d=>d.denom===row.denom&&Math.abs(+d.ep-+row.ep)<0.01);
+      if(def&&def.od!=null) row.od=def.od;
+    }
+  });
+  // Migration: fill missing celsius in tempRows
+  if(base.tempRows) base.tempRows.forEach(row=>{
+    if(row.celsius==null){
+      const def=DEFAULTS.tempRows.find(d=>d.label===row.label);
+      if(def&&def.celsius!=null) row.celsius=def.celsius;
+    }
+  });
   return base;
 }
 
@@ -438,7 +495,6 @@ function loadData(){
 
 function saveData(){
   localStorage.setItem(LS_KEY,JSON.stringify(DATA));
-  // Si admin connecté → sauvegarder sur le serveur pour tous
   if(pinUnlocked){
     fetch(API_URL,{
       method:'POST',
@@ -451,12 +507,52 @@ function saveData(){
 function flash(s){ const e=document.getElementById('si-'+s); if(!e)return; e.classList.add('show'); setTimeout(()=>e.classList.remove('show'),1500); }
 
 function getTypeMap(){ const m={}; DATA.typeRows.forEach(r=>{m[r.code]={conn1:r.conn1,conn2:r.conn2}}); return m; }
-function getTubeMap(){ const m={}; DATA.tubeRows.forEach(r=>{ if(!m[r.denom])m[r.denom]=[]; m[r.denom].push({ep:+r.ep,bar:+r.bar,psi:r.psi?+r.psi:null,taille:r.taille}); }); return m; }
+function getTubeMap(){
+  const m={};
+  DATA.tubeRows.forEach(r=>{
+    if(!m[r.denom])m[r.denom]=[];
+    m[r.denom].push({ep:+r.ep,bar:+r.bar,psi:r.psi?+r.psi:null,taille:r.taille,od:r.od!=null?+r.od:null});
+  });
+  return m;
+}
 function getTubeLabel(d){ const r=DATA.tubeRows.find(x=>x.denom===d); return r?r.taille:d; }
 function getMaleMap(){   const m={}; DATA.maleRows.forEach(r=>{m[r.denom]=+r.bar}); return m; }
 function getFemaleMap(){ const m={}; DATA.femaleRows.forEach(r=>{m[r.denom]=+r.bar}); return m; }
 function getMoMap(){     const m={}; DATA.moRows.forEach(r=>{m[r.denom]=+r.bar}); return m; }
 function getAdaptMap(){ const m={}; DATA.adaptRows.forEach(r=>{m[r.denom]=r.desc}); return m; }
+
+// ═══════════════════════ FORMULE DIN 2413 ═══════════════════════
+const MAT_TEMPS=[20,100,150,200,250,300,350,400];
+
+// Interpolation linéaire de Rp1.0 à la température demandée
+function getRpAtTemp(rp,celsius){
+  if(!rp||celsius==null)return null;
+  if(celsius<=MAT_TEMPS[0])return rp[0];
+  if(celsius>MAT_TEMPS[MAT_TEMPS.length-1])return null;
+  for(let i=1;i<MAT_TEMPS.length;i++){
+    if(celsius<=MAT_TEMPS[i]){
+      // trouver les bornes non-nulles
+      let hi=i; while(hi<MAT_TEMPS.length&&rp[hi]==null)hi++;
+      let lo=i-1; while(lo>=0&&rp[lo]==null)lo--;
+      if(lo<0&&hi>=MAT_TEMPS.length)return null;
+      if(lo<0)return rp[hi];
+      if(hi>=MAT_TEMPS.length)return null;
+      const frac=(celsius-MAT_TEMPS[lo])/(MAT_TEMPS[hi]-MAT_TEMPS[lo]);
+      return rp[lo]+frac*(rp[hi]-rp[lo]);
+    }
+  }
+  return null;
+}
+
+// P_bar = (Rp1.0/1.5) / OD * 20 * s_min   (DIN 2413)
+function calcTubePressure(od,wt,rp,celsius){
+  if(!od||!wt)return null;
+  const rpT=getRpAtTemp(rp,celsius);
+  if(rpT==null)return null;
+  const sMin=wt-Math.max(0.1*wt,0.2);
+  if(sMin<=0)return null;
+  return Math.round((rpT/1.5)/od*20*sMin*10)/10;
+}
 
 // ═══════════════════════ PARSING ═══════════════════════
 const DENOM='(?:32|24|20|16|12|8|6|4|2|1)';
@@ -465,7 +561,6 @@ const RE_TH=new RegExp('^('+DENOM+')([NRG])','i');
 const RE_FR=new RegExp('^('+DENOM+')(?![NRG])','i');
 const RE_FE=new RegExp('^('+DENOM+')$','i');
 
-// Parse un segment unique depuis une chaîne ENTIÈRE (doit consommer tout s)
 function parseOneSeg(s){
   let m;
   m=s.match(/^(\d+M)$/i); if(m) return {code:m[1].toUpperCase(),rt:'tube'};
@@ -474,13 +569,11 @@ function parseOneSeg(s){
   return null;
 }
 
-// Vérifie qu'un code existe dans la table conn1
 function existsC1(code,conn1){
   if(conn1==='T') return !!getTubeMap()[code];
   if(conn1==='A') return !!getAdaptMap()[code];
   return true;
 }
-// Vérifie qu'un code existe dans la table conn2
 function existsC2(code,conn2){
   if(conn2==='M')  return getMaleMap()[code]!==undefined;
   if(conn2==='F')  return getFemaleMap()[code]!==undefined;
@@ -490,9 +583,6 @@ function existsC2(code,conn2){
   return true;
 }
 
-// Si un seul segment parsé alors qu'il en faut 2 :
-// 1. Essayer un split (préfixe + reste) où les deux existent dans leurs tables
-// 2. Sinon : règle "même taille" (le code numérique est commun aux deux connexions)
 function fixSingleSeg(seg,ti){
   const code=seg.code;
   for(const pref of ['1','2','4','6','8','12','16','20','24','32']){
@@ -504,7 +594,6 @@ function fixSingleSeg(seg,ti){
       return [{code:pref,rt:'tube'},restSeg];
     }
   }
-  // Règle même taille : extrait la partie numérique du thread et l'ajoute en conn1
   if(seg.rt==='thread'){
     const nm=seg.code.match(/^(\d+)[NRG]$/);
     if(nm) return [{code:nm[1],rt:'tube'},seg];
@@ -539,7 +628,6 @@ function parseRef(raw){
   }
   if(!raw2.length) return {error:'Aucun embout identifié'};
 
-  // Si un seul segment, tenter de le scinder en 2
   if(raw2.length===1){
     const fixed=fixSingleSeg(raw2[0],ti);
     if(fixed) raw2.splice(0,1,...fixed);
@@ -597,7 +685,7 @@ function onSearch(val){
   drop.style.display=html?'block':'none';
 }
 
-function escH(s){return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+function escH(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
 function escRe(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
 
 function onSearchKey(e){
@@ -622,8 +710,10 @@ function processRef(ref){
   const cBlk=document.getElementById('connBlock');
   const cRows=document.getElementById('connRows');
   const tBlk=document.getElementById('tempBlock');
+  const mBlk=document.getElementById('matBlock');
   const btn=document.getElementById('btnCalc');
-  iMsg.style.display='none'; cBlk.style.display='none'; tBlk.style.display='none';
+  iMsg.style.display='none'; cBlk.style.display='none';
+  tBlk.style.display='none'; mBlk.style.display='none';
   btn.disabled=true; cRows.innerHTML='';
 
   if(parsed.error){
@@ -633,6 +723,7 @@ function processRef(ref){
   cBlk.style.display='block';
   const tubeMap=getTubeMap();
   const seenT=new Set();
+  let hasTube=false;
 
   parsed.segments.forEach(seg=>{
     const row=document.createElement('div'); row.className='conn-row';
@@ -641,6 +732,7 @@ function processRef(ref){
     row.appendChild(tag); row.appendChild(lbl);
 
     if(seg.connType==='T'){
+      hasTube=true;
       if(!seenT.has(seg.code)){
         seenT.add(seg.code);
         const opts=tubeMap[seg.code];
@@ -648,7 +740,8 @@ function processRef(ref){
           const sp=document.createElement('span'); sp.style.cssText='font-size:.82rem;color:#c62828;font-style:italic'; sp.textContent='Taille non reconnue'; row.appendChild(sp);
         } else {
           const sel=document.createElement('select'); sel.id=`tube_${seg.code}`; sel.onchange=checkReady;
-          sel.innerHTML='<option value="">— Épaisseur —</option>'+opts.map(o=>`<option value="${o.bar}">${o.ep} mm → ${o.bar} bar</option>`).join('');
+          sel.innerHTML='<option value="">— Épaisseur —</option>'+
+            opts.map(o=>`<option value="${o.ep}">${o.ep} mm WT${o.od?' – ∅'+o.od+' mm':''} (réf. ${o.bar} bar)</option>`).join('');
           row.appendChild(sel);
         }
       } else {
@@ -666,17 +759,19 @@ function processRef(ref){
     cRows.appendChild(row);
   });
 
+  if(hasTube) mBlk.style.display='block';
   tBlk.style.display='block'; checkReady();
 }
 
 function checkReady(){
   if(!currentParsed||currentParsed.error){document.getElementById('btnCalc').disabled=true;return;}
-  const tubeMap=getTubeMap(); const seenT=new Set(); let ok=true;
+  const tubeMap=getTubeMap(); const seenT=new Set(); let ok=true; let hasTube=false;
   currentParsed.segments.forEach(s=>{
-    if(s.connType!=='T'||seenT.has(s.code))return; seenT.add(s.code);
+    if(s.connType!=='T'||seenT.has(s.code))return; seenT.add(s.code); hasTube=true;
     if(!tubeMap[s.code])return;
     if(!document.getElementById(`tube_${s.code}`)?.value) ok=false;
   });
+  if(hasTube&&!document.getElementById('matSelect')?.value) ok=false;
   document.getElementById('btnCalc').disabled=!(ok&&document.getElementById('tempSelect').value!=='');
 }
 
@@ -684,51 +779,103 @@ function calculate(){
   const p=currentParsed; if(!p||p.error)return;
   const tIdx=parseInt(document.getElementById('tempSelect').value);
   const tRow=DATA.tempRows[tIdx];
-  const tubeMap=getTubeMap(),mM=getMaleMap(),fM=getFemaleMap(),moM=getMoMap();
-  const details=[],warnings=[],tubePres=[],otherPres=[];
+  const celsius=tRow.celsius!=null?+tRow.celsius:null;
+  const matIdx=parseInt(document.getElementById('matSelect')?.value??'');
+  const matRow=(!isNaN(matIdx)&&matIdx>=0)?DATA.matRows[matIdx]:null;
+
+  const tubeMap=getTubeMap();
+  const details=[],warnings=[],allPres=[];
   const seenT=new Set();
 
   p.segments.forEach(seg=>{
     if(seg.connType==='T'){
-      if(seenT.has(seg.code)){details.push({label:seg.label,bar:null,note:'même tube'});return;}
+      if(seenT.has(seg.code)){details.push({label:seg.label,adjBar:null,note:'même tube'});return;}
       seenT.add(seg.code);
       if(!tubeMap[seg.code]){warnings.push(`Tube ${seg.code} : taille non reconnue`);return;}
-      const v=parseFloat(document.getElementById(`tube_${seg.code}`)?.value); if(!v)return;
-      tubePres.push({label:seg.label,bar:v}); details.push({label:seg.label,bar:v});
-    } else if(seg.connType==='A'){
-      details.push({label:seg.label,bar:null,note:'adapteur — ignoré'});
-    } else {
-      let bar=connBar(seg);
-      if(bar===null){
-        warnings.push(seg.code.endsWith('G')&&seg.connType==='F'?`BSPP femelle ${seg.code} : données manquantes`:`${seg.label} : données manquantes`);
-        details.push({label:seg.label,bar:null,note:'données manquantes'});
+      const ep=parseFloat(document.getElementById(`tube_${seg.code}`)?.value); if(!ep)return;
+      const tubeRowData=DATA.tubeRows.find(r=>r.denom===seg.code&&Math.abs(+r.ep-ep)<0.01);
+      const od=tubeRowData?.od!=null?+tubeRowData.od:null;
+      const refBar=tubeRowData?+tubeRowData.bar:null;
+
+      let adjBar=null,note='',isFormula=false;
+      if(od&&matRow&&celsius!=null){
+        const pCalc=calcTubePressure(od,ep,matRow.rp,celsius);
+        if(pCalc!==null){
+          adjBar=pCalc; isFormula=true;
+          note=`DIN 2413 — ${matRow.grade}, ${celsius}°C`;
+        } else {
+          adjBar=refBar!=null?Math.round(refBar*tRow.factor*10)/10:null;
+          note='T > 400°C — valeur catalogue';
+          if(refBar!=null)warnings.push(`${seg.label} : température hors table Rp1.0 (${matRow.grade}), valeur catalogue utilisée`);
+        }
+      } else if(!od){
+        adjBar=refBar!=null?Math.round(refBar*tRow.factor*10)/10:null;
+        note='∅ ext. non renseigné — valeur catalogue';
+        if(refBar!=null)warnings.push(`${seg.label} : ∅ extérieur non renseigné, valeur catalogue utilisée`);
       } else {
-        otherPres.push({label:seg.label,bar}); details.push({label:seg.label,bar});
+        adjBar=refBar!=null?Math.round(refBar*tRow.factor*10)/10:null;
+        note='Valeur catalogue';
+      }
+      if(adjBar==null){warnings.push(`${seg.label} : données insuffisantes`);return;}
+      details.push({label:seg.label,adjBar,rawBar:refBar,note,isFormula,ep,od});
+      allPres.push({label:seg.label,adjBar});
+
+    } else if(seg.connType==='A'){
+      details.push({label:seg.label,adjBar:null,note:'adapteur — ignoré'});
+    } else {
+      const rawBar=connBar(seg);
+      if(rawBar===null){
+        warnings.push(`${seg.label} : données manquantes`);
+        details.push({label:seg.label,adjBar:null,note:'données manquantes'});
+      } else {
+        const adjBar=Math.round(rawBar*tRow.factor*10)/10;
+        details.push({label:seg.label,adjBar,rawBar,note:`catalogue × ${tRow.factor}`});
+        allPres.push({label:seg.label,adjBar});
       }
     }
   });
 
-  let base=null,limLbl='';
-  if(tubePres.length){const mn=tubePres.reduce((a,b)=>a.bar<b.bar?a:b);base=mn.bar;limLbl=mn.label;}
-  else if(otherPres.length){const mn=otherPres.reduce((a,b)=>a.bar<b.bar?a:b);base=mn.bar;limLbl=mn.label;}
-  renderResult({base,limLbl,tRow,details,warnings});
-}
-
-function renderResult({base,limLbl,tRow,details,warnings}){
-  const c=document.getElementById('resultContainer');
-  if(base===null){
-    c.innerHTML=`<div class="result-card"><div class="result-header red"><div style="font-size:.95rem;color:#b71c1c;font-weight:600">Impossible de calculer — données insuffisantes</div></div><div class="result-body">${warnings.map(w=>`<div class="warn-item">${w}</div>`).join('')}</div></div>`;
+  if(!allPres.length){
+    renderResult({adjBar:null,details,warnings,tRow,matRow});
     return;
   }
-  const fin=Math.round(base*tRow.factor*10)/10;
+  const mn=allPres.reduce((a,b)=>a.adjBar<b.adjBar?a:b);
+  details.forEach(d=>{if(d.label===mn.label)d.isLimiting=true;});
+  renderResult({adjBar:mn.adjBar,details,warnings,tRow,matRow});
+}
+
+function renderResult({adjBar,details,warnings,tRow,matRow}){
+  const c=document.getElementById('resultContainer');
+  if(adjBar===null){
+    c.innerHTML=`<div class="result-card"><div class="result-header red"><div style="font-size:.95rem;color:#b71c1c;font-weight:600">Impossible de calculer — données insuffisantes</div></div><div class="result-body">${warnings.map(w=>`<div class="warn-item">${escH(w)}</div>`).join('')}</div></div>`;
+    return;
+  }
+  const fin=Math.round(adjBar*10)/10;
   const hc=warnings.length?'orange':'green';
+
   let det=details.map(d=>{
-    if(d.bar===null)return `<div class="detail-row"><span class="detail-key">${d.label}</span><span class="detail-val muted">${d.note||'—'}</span></div>`;
-    const lim=d.label===limLbl;
-    return `<div class="detail-row"><span class="detail-key">${d.label}</span><span class="detail-val ${lim?'limiting':''}">${d.bar} bar${lim?' ← limitant':''}</span></div>`;
+    if(d.adjBar===null)return `<div class="detail-row"><span class="detail-key">${escH(d.label)}</span><span class="detail-val muted">${escH(d.note||'—')}</span></div>`;
+    const lim=d.isLimiting;
+    let valStr;
+    if(d.isFormula){
+      valStr=`${d.adjBar} bar${lim?' ← limitant':''}`;
+    } else if(d.rawBar!=null&&d.note&&d.note.includes('×')){
+      valStr=`${d.rawBar} × ${tRow.factor} = ${d.adjBar} bar${lim?' ← limitant':''}`;
+    } else {
+      valStr=`${d.adjBar} bar${lim?' ← limitant':''}`;
+    }
+    const noteHtml=d.note?`<br><span class="note-formula">${escH(d.note)}</span>`:'';
+    return `<div class="detail-row"><span class="detail-key">${escH(d.label)}${noteHtml}</span><span class="detail-val ${lim?'limiting':''}">${valStr}</span></div>`;
   }).join('');
-  det+=`<div class="separator"></div><div class="detail-row"><span class="detail-key">Température ${tRow.label}</span><span class="detail-val">× ${tRow.factor}</span></div><div class="detail-row"><span class="detail-key" style="font-weight:700">Pression admissible</span><span class="detail-val" style="font-size:1.05rem;color:#1b3a5c">${fin} bar</span></div>`;
-  c.innerHTML=`<div class="result-card"><div class="result-header ${hc}"><div class="pressure-val">${fin}<span class="pressure-unit">bar</span></div><div class="pressure-label">Pression maximale admissible</div></div><div class="result-body">${det}${warnings.map(w=>`<div class="warn-item">${w}</div>`).join('')}</div></div>`;
+
+  det+=`<div class="separator"></div>`;
+  if(matRow){
+    det+=`<div class="detail-row"><span class="detail-key">Matériau tube</span><span class="detail-val">${escH(matRow.grade)}</span></div>`;
+  }
+  det+=`<div class="detail-row"><span class="detail-key">Température</span><span class="detail-val">${escH(tRow.label)}</span></div>`;
+  det+=`<div class="detail-row"><span class="detail-key" style="font-weight:700">Pression maximale admissible</span><span class="detail-val" style="font-size:1.05rem;color:#1b3a5c">${fin} bar</span></div>`;
+
+  c.innerHTML=`<div class="result-card"><div class="result-header ${hc}"><div class="pressure-val">${fin}<span class="pressure-unit">bar</span></div><div class="pressure-label">Pression maximale admissible</div></div><div class="result-body">${det}${warnings.map(w=>`<div class="warn-item">${escH(w)}</div>`).join('')}</div></div>`;
 }
 
 // ═══════════════════════ NAVIGATION ═══════════════════════
@@ -775,9 +922,8 @@ function checkPin(){
   }
 }
 
-function closePin(){
-  document.getElementById('pinOverlay')?.remove();
-}
+function closePin(){ document.getElementById('pinOverlay')?.remove(); }
+
 function showEtab(ev,name){
   document.querySelectorAll('.editor-section').forEach(e=>e.classList.remove('active'));
   document.querySelectorAll('.etab-btn').forEach(e=>e.classList.remove('active'));
@@ -795,18 +941,27 @@ function connSel(val,key,field){
   return `<select onchange="setField('${key}','${field}',this)">${opts}</select>`;
 }
 
-// Stockage de l'index courant pour callbacks
 function setField(key,field,el){
-  // key = "types:2", field = "code"
   const [section,idx]=key.split(':');
   const i=parseInt(idx);
-  if(section==='types')    DATA.typeRows[i][field]=el.value;
-  if(section==='tube')     DATA.tubeRows[i][field]=field==='psi'?(el.value||null):el.value;
-  if(section==='male')     DATA.maleRows[i][field]=el.value;
-  if(section==='mo')       DATA.moRows[i][field]=el.value;
-  if(section==='female')   DATA.femaleRows[i][field]=el.value;
-  if(section==='adapt')    DATA.adaptRows[i][field]=el.value;
-  if(section==='temp')     DATA.tempRows[i][field]=field==='factor'?+el.value:el.value;
+  if(section==='types')  DATA.typeRows[i][field]=el.value;
+  if(section==='tube')   DATA.tubeRows[i][field]=
+    field==='psi'?(el.value||null):
+    field==='od'?(el.value===''?null:+el.value):el.value;
+  if(section==='male')   DATA.maleRows[i][field]=el.value;
+  if(section==='mo')     DATA.moRows[i][field]=el.value;
+  if(section==='female') DATA.femaleRows[i][field]=el.value;
+  if(section==='adapt')  DATA.adaptRows[i][field]=el.value;
+  if(section==='temp')   DATA.tempRows[i][field]=
+    field==='factor'?+el.value:
+    field==='celsius'?(el.value===''?null:+el.value):el.value;
+  if(section==='mat'){
+    if(field==='grade') DATA.matRows[i].grade=el.value;
+    else{
+      const rpIdx=parseInt(field.slice(2));
+      DATA.matRows[i].rp[rpIdx]=el.value===''?null:+el.value;
+    }
+  }
   saveData(); flash(section);
 }
 
@@ -823,8 +978,9 @@ function renderTube(){
   document.querySelector('#tbl-tube tbody').innerHTML=DATA.tubeRows.map((r,i)=>`<tr>
     <td>${inp(r.denom,'55px','tube:'+i,'denom')}</td>
     <td>${inp(r.taille,'65px','tube:'+i,'taille')}</td>
+    <td>${inp(r.od??'','55px','tube:'+i,'od')}</td>
     <td>${inp(r.ep,'55px','tube:'+i,'ep')}</td>
-    <td>${inp(r.bar,'55px','tube:'+i,'bar')}</td>
+    <td>${inp(r.bar,'60px','tube:'+i,'bar')}</td>
     <td>${inp(r.psi??'','55px','tube:'+i,'psi')}</td>
     <td><button class="btn-del" onclick="delRow('tube',${i})">×</button></td>
   </tr>`).join('');
@@ -842,9 +998,19 @@ function renderThread(key){
 function renderTemp(){
   document.querySelector('#tbl-temp tbody').innerHTML=DATA.tempRows.map((r,i)=>`<tr>
     <td>${inp(r.label,'160px','temp:'+i,'label')}</td>
+    <td>${inp(r.celsius??'','55px','temp:'+i,'celsius')}</td>
     <td>${inp(r.factor,'65px','temp:'+i,'factor')}</td>
     <td><button class="btn-del" onclick="delRow('temp',${i})">×</button></td>
   </tr>`).join('');
+}
+
+function renderMat(){
+  document.querySelector('#tbl-mat tbody').innerHTML=(DATA.matRows||[]).map((r,i)=>{
+    const rpCells=[0,1,2,3,4,5,6,7].map(j=>
+      `<td>${inp(r.rp[j]??'','48px','mat:'+i,'rp'+j)}</td>`
+    ).join('');
+    return `<tr><td>${inp(r.grade,'72px','mat:'+i,'grade')}</td>${rpCells}<td><button class="btn-del" onclick="delRow('mat',${i})">×</button></td></tr>`;
+  }).join('');
 }
 
 function renderRaccords(){
@@ -861,12 +1027,13 @@ function renderAdapt(){
     <td><button class="btn-del" onclick="delRow('adapt',${i})">×</button></td>
   </tr>`).join('');
 }
-function addAdaptRow(){ DATA.adaptRows.push({denom:'',desc:''}); saveData();renderAdapt();flash('adapt'); }
 
+function addAdaptRow(){ DATA.adaptRows.push({denom:'',desc:''}); saveData();renderAdapt();flash('adapt'); }
 function addTypeRow(){ DATA.typeRows.push({code:'',conn1:'T',conn2:'T'}); saveData();renderTypes();flash('types'); }
-function addTubeRow(){ DATA.tubeRows.push({denom:'',taille:'',ep:0,bar:0,psi:null}); saveData();renderTube();flash('tube'); }
+function addTubeRow(){ DATA.tubeRows.push({denom:'',taille:'',od:null,ep:0,bar:0,psi:null}); saveData();renderTube();flash('tube'); }
 function addThreadRow(k){ DATA[k+'Rows'].push({denom:'',desc:'',bar:0}); saveData();renderThread(k);flash(k); }
-function addTempRow(){ DATA.tempRows.push({label:'',factor:1}); saveData();renderTemp();flash('temp'); }
+function addTempRow(){ DATA.tempRows.push({label:'',celsius:null,factor:1}); saveData();renderTemp();flash('temp'); }
+function addMatRow(){ DATA.matRows.push({grade:'',rp:[null,null,null,null,null,null,null,null]}); saveData();renderMat();flash('mat'); }
 function addRaccord(){
   const v=document.getElementById('newRac').value.trim().toUpperCase(); if(!v)return;
   if(!DATA.raccordList.includes(v)) DATA.raccordList.push(v);
@@ -876,10 +1043,13 @@ function addRaccord(){
 
 function delRow(s,i){
   if(!confirm('Supprimer cette ligne ?'))return;
-  const map={types:'typeRows',tube:'tubeRows',male:'maleRows',mo:'moRows',female:'femaleRows',adapt:'adaptRows',temp:'tempRows'};
+  const map={types:'typeRows',tube:'tubeRows',male:'maleRows',mo:'moRows',female:'femaleRows',adapt:'adaptRows',temp:'tempRows',mat:'matRows'};
   DATA[map[s]].splice(i,1); saveData();
-  if(s==='types')renderTypes(); else if(s==='tube')renderTube();
-  else if(s==='adapt')renderAdapt(); else if(s==='temp')renderTemp();
+  if(s==='types')renderTypes();
+  else if(s==='tube')renderTube();
+  else if(s==='adapt')renderAdapt();
+  else if(s==='temp')renderTemp();
+  else if(s==='mat')renderMat();
   else renderThread(s);
   flash(s);
 }
@@ -891,7 +1061,7 @@ function delRaccord(btn){
 
 function resetSection(s){
   if(!confirm('Réinitialiser aux valeurs par défaut ?'))return;
-  const map={types:'typeRows',tube:'tubeRows',male:'maleRows',mo:'moRows',female:'femaleRows',adapt:'adaptRows',temp:'tempRows',raccords:'raccordList'};
+  const map={types:'typeRows',tube:'tubeRows',male:'maleRows',mo:'moRows',female:'femaleRows',adapt:'adaptRows',temp:'tempRows',raccords:'raccordList',mat:'matRows'};
   DATA[map[s]]=JSON.parse(JSON.stringify(DEFAULTS[map[s]]));
   saveData();renderAll();flash(s);
 }
@@ -899,12 +1069,19 @@ function resetSection(s){
 function renderAll(){
   renderTypes();renderTube();
   renderThread('male');renderThread('mo');renderThread('female');
-  renderAdapt();renderTemp();renderRaccords();
+  renderAdapt();renderTemp();renderRaccords();renderMat();
   const ts=document.getElementById('tempSelect');
   const cur=ts.value;
   ts.innerHTML='<option value="">— Sélectionner —</option>'+
     DATA.tempRows.map((t,i)=>`<option value="${i}">${t.label}   (× ${t.factor})</option>`).join('');
   if(cur)ts.value=cur;
+  const ms=document.getElementById('matSelect');
+  if(ms){
+    const curm=ms.value;
+    ms.innerHTML='<option value="">— Sélectionner —</option>'+
+      (DATA.matRows||[]).map((m,i)=>`<option value="${i}">${escH(m.grade)}</option>`).join('');
+    if(curm)ms.value=curm;
+  }
 }
 
 // Chargement initial : serveur en priorité, localStorage en fallback
